@@ -1,2 +1,2 @@
 # tiotemp
-Spatio-temporal html widget for R Shiny apps
+A spa**tiotemp**oral visualization package. 
