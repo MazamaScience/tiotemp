@@ -2,6 +2,11 @@ let meta1;
 let data1;
 let meta;
 let data;
+let focusData;
+let sensorIDs;
+let focusDate;
+let focusColor;
+let focusCoords;
 
 HTMLWidgets.widget({
 
@@ -11,56 +16,36 @@ HTMLWidgets.widget({
 
   factory: function (el, width, height) {
 
-    d3.select("#htmlwidget_container")
-      .append("div")
-      .attr("id", el.id + "_2")
-      .attr("class", "spatempr html-widget html-widget-static-bound")
-      .style("width", "100%")
-      .style("height", height + "px")
-      .style("position", "relative");
-
     // TODO: define shared variables for this instance
 
     let map = L
       .map(el.id)
-      .setView([35.5, -96.5], 4); // center position + zoom
+      .setView([35.5, -100.5], 6); // center position + zoom
 
     // Add a tile to the map = a background. Comes from OpenStreetmap
     L.tileLayer(
       'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
         maxZoom: 18,
-      }).addTo(map);
+      }).addTo(map)
 
     // Add a svg layer to the map
     L.svg().addTo(map);
 
-
     // We pick up the SVG from the map object
-    let svgMap = d3.select("#" + el.id).select("svg").append("g");
+    let svgMap = d3.select("#" + el.id)
+      .select(".leaflet-pane")
+      .select("svg")
+      .append("g");
 
-    const adj = 30;
-    const parseDate = d3.timeParse("%Y-%m-%dT%H:%M:%SZ");
-    let svgPlot = d3.select("#" + el.id + "_2")
+    // Playback control layer
+    let svgPlayback = d3.select("#" + el.id)
+      .select(".leaflet-control-container")
+      .select(".leaflet-bottom")
       .append("div")
-      .append("svg")
-      .style("width", "100%")
-      .style("height", height + "px")
-      .attr("viewBox", "-" +
-        adj + " -" +
-        adj + " " +
-        (width + adj * 3) + " " +
-        (height + adj * 3))
-      .classed("svg-content", true);
-    /*      .style("padding-top", height+"px")
-          .attr("class", "plot");*/
-
-    // Create cursor follower
-    let focus = svgPlot.append("g");
-    //.append("display", "none");
+      .attr("class", "leaflet-control");
 
     // Store mouseover focus data
-    let focusDate;
     let focusColor;
 
     // color ramp map
@@ -70,175 +55,200 @@ HTMLWidgets.widget({
       .range(["#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a"]);
 
 
+    const parseDate = d3.timeParse("%Y-%m-%dT%H:%M:%SZ");
+    // Bisect date long to left side of hour
+    const bisect = d3.bisector(d => {
+      return d.date
+    }).left;
 
-return {
-  renderValue: function (x) {
-
-    // TODO: code to render the widget, e.g.
-    meta = d3.csv("https://raw.githubusercontent.com/MazamaScience/timeseries-map/master/meta.csv"); //(x.meta);
-    data = d3.csv("https://raw.githubusercontent.com/MazamaScience/timeseries-map/master/data.csv"); //(x.data);
-
-    meta1 = HTMLWidgets.dataframeToD3(x.meta);
-    data1 = HTMLWidgets.dataframeToD3(x.data);
-
-    meta.then(function (m) {
-      // Add a LatLng object from meta coords
-      m.forEach(d => {
-        d.LatLng = new L.LatLng(d.latitude, d.longitude)
-      });
-
-      let mouseIn = function (d) {
-        d3.select(d3.event.target)
-          .raise()
-          .transition()
-          .duration(100)
-          .attr("r", 12);
-      }
-
-      let mouseOut = function (d) {
-        d3.select(d3.event.target)
-          .transition()
-          .duration(150)
-          .attr("r", 8);
-      }
-
-      let feature = svgMap.selectAll("mycircle")
-        .data(m)
-        .enter()
-        .append("circle")
-        .attr("cx", d => {
-          map.latLngToLayerPoint(d.LatLng).x
-        })
-        .attr("cy", d => {
-          map.latLngToLayerPoint(d.LatLng).y
-        })
-        .attr("r", 8)
-        .style("fill", "red")
-        .attr("stroke", "white")
-        .attr("stroke-width", 2)
-        .attr("fill-opacity", 0.75)
-        .attr("stoke-opacity", 0.75)
-        .on("mouseover", mouseIn)
-        .on("mouseout", mouseOut)
-        .attr("pointer-events", "visible");
-      //.on("click", onMarkerClick)
-
-      // Function that update circle position if something change
-      function updateMap() {
-        //g.selectAll("circle")
-        feature
-          .attr("cx", function (d) {
-            return map.latLngToLayerPoint(d.LatLng).x
-          })
-          .attr("cy", function (d) {
-            return map.latLngToLayerPoint(d.LatLng).y
-          })
-      }
-
-      map.on("moveend", updateMap);
-
-      updateMap();
+    //const sensorIDs;
 
 
-    });
+    return {
+      renderValue: function (x) {
+
+        meta = HTMLWidgets.dataframeToD3(x.meta);
+        data = HTMLWidgets.dataframeToD3(x.data);
 
 
-    // data
-    data.then(function (d) {
+        // Add a LatLng object from meta coords
+        meta.forEach(d => {
+          d.LatLng = new L.LatLng(d.latitude, d.longitude)
+        });
 
-      // This chunk takes the CSV data, remaps it to a more appropriate format
-      let slice = d.columns.slice(1).map(function (id) {
-        return {
-          id: id,
-          values: d.map(function (d) {
-            return {
-              date: parseDate(d.datetime),
-              pm25: +d[id],
-              color: col(+d[id])
-            };
-          })
+        let mouseIn = function (d) {
+          d3.select(d3.event.target)
+            .raise()
+            .transition()
+            .duration(100)
+            .attr("r", 12);
         }
-      });
 
-      // Add custom class id to each line using monitorID
-    let i = 0;
-    const ids = () => {
-        return "line-" + slice[i++].id
-    }
+        let mouseOut = function (d) {
+          d3.select(d3.event.target)
+            .transition()
+            .duration(150)
+            .attr("r", 8);
+        }
 
-      // Scale prep
-      const xScale = d3.scaleUtc().range([0, width]);
-      const yScale = d3.scaleLinear().rangeRound([height, 0]);
+        let feature = svgMap.selectAll("mycircle")
+          .data(meta)
+          .enter()
+          .append("circle")
+          .attr("cx", d => {
+            map.latLngToLayerPoint(d.LatLng).x
+          })
+          .attr("cy", d => {
+            map.latLngToLayerPoint(d.LatLng).y
+          })
+          .attr("r", 8)
+          .style("fill", "red")
+          .attr("stroke", "white")
+          .attr("stroke-width", 2)
+          .attr("fill-opacity", 0.75)
+          .attr("stoke-opacity", 0.75)
+          .on("mouseover", mouseIn)
+          .on("mouseout", mouseOut)
+          .attr("pointer-events", "visible");
+        //.on("click", onMarkerClick)
 
-      xScale.domain(d3.extent(d, function (d) {
-        return parseDate(d.datetime)
-      }));
-      yScale.domain([(0), d3.max(slice, function (c) {
-        return d3.max(c.values, function (d) {
-          return d.pm25 + 4;
-        });
-      })]);
+        // Function that update circle position if something change
+        function updateMap() {
+          //g.selectAll("circle")
+          feature
+            .attr("cx", function (d) {
+              return map.latLngToLayerPoint(d.LatLng).x
+            })
+            .attr("cy", function (d) {
+              return map.latLngToLayerPoint(d.LatLng).y
+            })
+        }
 
-      // Axis prep
-      const xAxis = d3.axisBottom()
-        .ticks(d3.timeDay.every(1))
-        .tickFormat(d3.timeFormat("%b %d"))
-        .scale(xScale);
+        map.on("moveend", updateMap);
 
-      const yAxis = d3.axisLeft()
-        .ticks((slice[0].values).length)
-        .scale(yScale);
+        updateMap();
 
-         // Add the x axis
-    svgPlot.append("g")
-        .attr("class", "x-axis")
-        .attr("transform", "translate(0," + height + ")")
-        .call(xAxis);
-
-    // Add the y axis
-    svgPlot.append("g")
-        .attr("class", "y-axis")
-        .call(yAxis);
-
-        const line = d3.line()
-        .x(d => {
-            return xScale(d.date)
+        sensorIDs = meta.map(d => {
+          return d.monitorID
         })
-        .y(d => {
-            return yScale(d.pm25)
-        });
 
 
-    let lines = svgPlot.selectAll("lines")
-      .data(slice)
-      .enter()
-      .append("g");
-
-        lines.append("path")
-        .attr("class", ids)
-        .attr("d", d => {
-            return line(d.values)
+        focusData = sensorIDs.map(id => {
+          return {
+            id: id,
+            data: data.map(d => {
+              return {
+                date: d.datetime,
+                value: +d[id],
+                color: col(+d[id])
+              }
+            })
+          }
         })
-        .style("fill", "red");
-
-    });
-
-
-    //svgPlot.append("circle").attr("cx", 25).attr("cy", 25).attr("r", 25).style("fill", "purple");
 
 
 
-  },
-
-  resize: function (width, height) {
-
-    //.select("#" + el.id + "_2").select("svg")
-    //svgPlot.attr("width", "100%");
+        const dateDomain = data.map(d=> {return d.datetime });
+        let i = 0;
+        focusDate = dateDomain[i]
 
 
-    //force.size([width, height]).resume();
+        function mapColors(x0) {
+
+          // Map the color to each timestep on cursor
+          focusColor = focusData.map(d => {
+            return {
+              id: d.id,
+              date: d.data[i].date,
+              color: d.data[i].color
+            }
+          });
+
+        };
+
+        // create x scale
+        const xScale = d3.scaleUtc().range([0, width]);
+        xScale.domain(d3.extent(data, function (d) {
+          return parseDate(d.datetime)
+        }));
+
+
+        function updateColor() {
+          feature
+            .transition()
+            .duration(75)
+            .style("fill", (d, i) => {
+              return focusColor[i].color
+            })
+        }
+
+        function updateDateView() {
+          dateView.text(dateDomain[i])
+        }
+
+
+        let playButton = svgPlayback.append("button") // Append a text element
+          .attr("id", "play") // Give it the font-awesome class
+          .style("transform", "translate(50px,-100px)")
+          .style("font-size", "2em")
+          .style("color", "red")
+          .text("Play")
+          .attr("pointer-events", "visible");
+
+        let dateView = svgPlayback.append("text")
+          .attr("id", "date") // Give it the font-awesome class
+          .style("transform", "translate(50px,-10px)")
+          .style("font-size", "2em")
+          .style("color", "black")
+          .text(dateDomain[i])
+          .attr("pointer-events", "visible");
+
+
+        let playing = false;
+
+        let play = function () {
+          let x0 = i
+          console.log(i)
+          mapColors(i)
+          updateColor()
+          let button = d3.select(this)
+          console.log(button.text())
+          if (button.text() == "Pause") {
+            playing = false;
+            clearInterval(timer);
+            playButton.text("Play");
+          } else {
+            playing = true;
+            timer = setInterval(step, 250);
+            button.text("Pause");
+          }
+        }
+
+        function step() {
+          mapColors(i)
+          updateColor()
+          updateDateView()
+          console.log(dateDomain[i])
+          i++;
+          if (i >= data.length ) {
+            playing = false;
+            i = 0;
+            clearInterval(timer);
+            // timer = 0;
+            playButton.text("Play");
+          }
+        }
+
+        playButton.on("click", play);
+
+
+      }, // End render
+
+      resize: function (width, height) {
+
+
+      }
+
+    };
   }
-
-};
-}
 });

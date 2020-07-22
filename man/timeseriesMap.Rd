@@ -4,7 +4,7 @@
 \alias{timeseriesMap}
 \title{<Add Title>}
 \usage{
-timeseriesMap(meta, data, width = NULL, height = NULL, elementId = NULL)
+timeseriesMap(data, meta, width = NULL, height = NULL, elementId = NULL)
 }
 \description{
 <Add Description>

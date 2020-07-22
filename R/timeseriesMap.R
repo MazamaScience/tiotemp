@@ -5,7 +5,7 @@
 #' @import htmlwidgets
 #'
 #' @export
-timeseriesMap <- function(meta, data, width = NULL, height = NULL, elementId = NULL) {
+timeseriesMap <- function(data, meta, width = NULL, height = NULL, elementId = NULL) {
 
   # forward options using x
   x = list(
@@ -17,13 +17,14 @@ timeseriesMap <- function(meta, data, width = NULL, height = NULL, elementId = N
   htmlwidgets::createWidget(
     name = 'timeseriesMap',
     x,
-    width = "100%",
+    width = width,
     height = height,
     package = 'tiotemp',
     elementId = elementId,
     sizingPolicy = htmlwidgets::sizingPolicy(
+      defaultWidth = 800,
+      defaultHeight = 500,
       viewer.padding = 0,
-      viewer.paneHeight = height,
       browser.fill = TRUE
     )
   )
