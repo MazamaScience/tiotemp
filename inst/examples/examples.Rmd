@@ -1,0 +1,32 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r}
+library(tiotemp)
+library(AirSensor)
+
+setArchiveBaseUrl("http://data.mazamascience.com/PurpleAir/v1") # SCAQMD sensors
+```
+
+```{r}
+s <- sensor_load()
+data <- s$data
+meta <- s$meta
+```
+
+```{r, fig.height=14}
+timeseriesBarChart(meta, data)
+```
+
+```{r}
+timeseriesMap(data, meta)
+```
+
+```{r}
+
+```
+

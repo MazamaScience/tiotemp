@@ -8,7 +8,3 @@ dependencies:
    version: 5.16.0
    src: htmlwidgets/lib/d3
    script: d3.js
- - name: fa
-   version: 4.3.0
-   src: htmlwidgets/lib/fontawesome
-   stylesheet: font-awesome.min.css

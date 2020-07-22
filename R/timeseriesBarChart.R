@@ -5,7 +5,7 @@
 #' @import htmlwidgets
 #'
 #' @export
-timeseriesMap <- function(data, meta, shared = NULL, width = NULL, height = NULL, elementId = NULL) {
+timeseriesBarChart <- function(meta, data, shared = NULL, width = NULL, height = NULL, elementId = NULL) {
 
   if (crosstalk::is.SharedData(shared)) {
     # Using Crosstalk
@@ -17,7 +17,6 @@ timeseriesMap <- function(data, meta, shared = NULL, width = NULL, height = NULL
     key <- NULL
     group <- NULL
   }
-
   # forward options using x
   x = list(
     data = data,
@@ -28,50 +27,42 @@ timeseriesMap <- function(data, meta, shared = NULL, width = NULL, height = NULL
       crosstalk_group = group
     )
   )
-
   # create widget
   htmlwidgets::createWidget(
-    name = 'timeseriesMap',
+    name = 'timeseriesBarChart',
     x,
     width = width,
     height = height,
     package = 'tiotemp',
     elementId = elementId,
-    sizingPolicy = htmlwidgets::sizingPolicy(
-      defaultWidth = 800,
-      defaultHeight = 500,
-      viewer.padding = 0,
-      browser.fill = TRUE
-    ),
     dependencies = crosstalk::crosstalkLibs()
   )
-
 }
 
-#' Shiny bindings for timeseriesMap
+#' Shiny bindings for timeseriesBarChart
 #'
-#' Output and render functions for using timeseriesMap within Shiny
+#' Output and render functions for using timeseriesBarChart within Shiny
 #' applications and interactive Rmd documents.
 #'
 #' @param outputId output variable to read from
 #' @param width,height Must be a valid CSS unit (like \code{'100\%'},
 #'   \code{'400px'}, \code{'auto'}) or a number, which will be coerced to a
 #'   string and have \code{'px'} appended.
-#' @param expr An expression that generates a timeseriesMap
+#' @param expr An expression that generates a timeseriesBarChart
 #' @param env The environment in which to evaluate \code{expr}.
 #' @param quoted Is \code{expr} a quoted expression (with \code{quote()})? This
 #'   is useful if you want to save an expression in a variable.
 #'
-#' @name timeseriesMap-shiny
+#' @name timeseriesBarChart-shiny
 #'
 #' @export
-timeseriesMapOutput <- function(outputId, width = '100%', height = '400px'){
-  htmlwidgets::shinyWidgetOutput(outputId, 'timeseriesMap', width, height, package = 'tiotemp')
+timeseriesBarChartOutput <- function(outputId, width = '100%', height = '400px'){
+  htmlwidgets::shinyWidgetOutput(outputId, 'timeseriesBarChart', width, height, package = 'tiotemp')
 }
 
-#' @rdname timeseriesMap-shiny
+#' @rdname timeseriesBarChart-shiny
 #' @export
-renderTimeseriesMap <- function(expr, env = parent.frame(), quoted = FALSE) {
+renderTimeseriesBarChart <- function(expr, env = parent.frame(), quoted = FALSE) {
   if (!quoted) { expr <- substitute(expr) } # force quoted
-  htmlwidgets::shinyRenderWidget(expr, timeseriesMapOutput, env, quoted = TRUE)
+  htmlwidgets::shinyRenderWidget(expr, timeseriesBarChartOutput, env, quoted = TRUE)
 }

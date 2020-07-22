@@ -1,13 +1,3 @@
-let meta1;
-let data1;
-let meta;
-let data;
-let focusData;
-let sensorIDs;
-let focusDate;
-let focusColor;
-let focusCoords;
-
 HTMLWidgets.widget({
 
   name: 'timeseriesMap',
@@ -66,6 +56,16 @@ HTMLWidgets.widget({
 
     return {
       renderValue: function (x) {
+
+
+let focusData;
+let sensorIDs;
+let focusDate;
+let focusColor;
+let focusCoords;
+
+let meta;
+let data;
 
         meta = HTMLWidgets.dataframeToD3(x.meta);
         data = HTMLWidgets.dataframeToD3(x.data);
