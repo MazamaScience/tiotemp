@@ -9,7 +9,7 @@ HTMLWidgets.widget({
 
     let margin = {
       top: 10,
-      bottom: 10,
+      bottom: 40,
       left: 25,
       right: 10
     };
@@ -25,7 +25,10 @@ HTMLWidgets.widget({
         .attr("display", "block")
       let svgPlot = d3.select(el).append("svg")
         .attr("width", width)
-        .attr("height", height);
+        .attr("height", height)
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("viewBox", `0 0 ${width} ${height}` )
+        .classed("svg-content", true);;
 
     let ct_sel = new crosstalk.SelectionHandle();
 
@@ -33,13 +36,13 @@ HTMLWidgets.widget({
 
       renderValue: function(x) {
 
+
         let data;
-let meta;
-let focusData;
+        let meta;
+      let focusData;
 
         meta = HTMLWidgets.dataframeToD3(x.meta);
         data = HTMLWidgets.dataframeToD3(x.data);
-        //let yMax = d3.max(data, d => d
 
         sensorIDs = meta.map(d => {
           return d.monitorID
@@ -88,7 +91,7 @@ let focusData;
         let updateBars = function(d) {
 
           let bars = svgPlot.selectAll(".bar")
-               .data( d.data )
+               .data( d.data );
 
           bars.enter()
               .append("rect")
@@ -102,6 +105,7 @@ let focusData;
               .on("mouseover", mouseIn)
               .on("mouseout", mouseOut);
 
+
         // Update old ones, already have x / width from before
           bars.transition()
           .duration(300)
@@ -112,7 +116,7 @@ let focusData;
         };
 
           function mouseIn(d) {
-            date = d3.event.target.attributes.date
+            date = d.date;
             d3.select(d3.event.target)
               .style("stroke", "red")
           };
@@ -152,6 +156,9 @@ let focusData;
       resize: function(width, height) {
 
         // TODO: code to re-render the widget with a new size
+        svgPlot.attr("width", width)
+        .attr("height", height);
+//width(width).height(height)(false);
 
       }
 
