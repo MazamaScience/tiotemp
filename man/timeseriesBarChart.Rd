@@ -7,6 +7,9 @@
 timeseriesBarChart(
   meta,
   data,
+  title = NULL,
+  subtitle = NULL,
+  ylab = "PM₂.₅ (μg/m³)",
   shared = NULL,
   width = NULL,
   height = NULL,

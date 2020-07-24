@@ -2,8 +2,11 @@
 
 export(renderTimeseriesBarChart)
 export(renderTimeseriesMap)
+export(renderTimeseriesMap1)
 export(timeseriesBarChart)
 export(timeseriesBarChartOutput)
 export(timeseriesMap)
+export(timeseriesMap1)
+export(timeseriesMap1Output)
 export(timeseriesMapOutput)
 import(htmlwidgets)

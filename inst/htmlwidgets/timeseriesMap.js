@@ -1,3 +1,5 @@
+let data;
+let xScale;
 HTMLWidgets.widget({
 
   name: 'timeseriesMap',
@@ -35,6 +37,15 @@ HTMLWidgets.widget({
       .append("div")
       .attr("class", "leaflet-control");
 
+
+    let canvas = d3.select("#" + el.id)
+      .select(".leaflet-control-container")
+      .select(".leaflet-bottom")
+      .append("svg")
+      .attr("class", "leaflet-control")
+      .attr("width", width)
+    .attr("height", height/12);
+
     // Store mouseover focus data
     let focusColor;
 
@@ -58,17 +69,22 @@ HTMLWidgets.widget({
       renderValue: function (x) {
 
 
-let focusData;
-let sensorIDs;
-let focusDate;
-let focusColor;
-let focusCoords;
+        let focusData;
+        let sensorIDs;
+        let focusDate;
+        let focusColor;
+        let focusCoords;
 
-let meta;
-let data;
+        let meta;
+        //let data;
 
         meta = HTMLWidgets.dataframeToD3(x.meta);
         data = HTMLWidgets.dataframeToD3(x.data);
+
+
+        let slider = canvas.append("g")
+          .attr("class", "slider")
+          .attr("transform", `translate(${50},${height/12-10})`)
 
 
         // Add a LatLng object from meta coords
@@ -148,7 +164,9 @@ let data;
 
 
 
-        const dateDomain = data.map(d=> {return d.datetime });
+        let dateDomain = data.map(d => {
+          return d.datetime
+        });
         let i = 0;
         focusDate = dateDomain[i]
 
@@ -167,13 +185,56 @@ let data;
         };
 
         // create x scale
-        const xScale = d3.scaleUtc().range([0, width]);
-        xScale.domain(d3.extent(data, function (d) {
-          return parseDate(d.datetime)
-        }));
+      xScale = d3.scaleTime()
+          .domain(dateDomain)//d3.extent(data, d => { return parseDate(d.datetime) }))
+          .range([0, width])
+          .clamp(true);
 
+        slider.append("line")
+          .attr("class", "track")
+          .attr("x1", xScale.range()[0])
+          .attr("x2", xScale.range()[1])
+          .style("stroke", "#000")
+          .style("stroke-width", "10px")
+          .style("stroke-opacity", 0.3)
+          .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+    .attr("class", "track-inset")
+      .style("stroke", "#dcdcdc")
+      .style("stroke-width", "8px")
+  .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
+    .attr("class", "track-overlay")
+      .style("stroke-width", "50px")
+      .style("stroke", "transparent")
+      .call(d3.drag()
+        .on("start.interrupt", function() { slider.interrupt(); })
+        .on("start drag", function() {
+          currentValue = d3.event.x;
+          update(currentValue);
+        })
+    );
 
-        function updateColor() {
+    slider.insert("g", ".track-overlay")
+    .attr("class", "ticks")
+    .attr("transform", "translate(0," + 18 + ")")
+  .selectAll("text")
+    .data(xScale.ticks(10))
+    .enter()
+    .append("text")
+    .attr("x", x)
+    .attr("y", 10)
+    .attr("text-anchor", "middle");
+
+    let handle = slider.insert("circle", ".track-overlay")
+      .attr("class", "handle")
+      .attr("r", 9)
+      .style("fill", "#fff")
+      .style("stroke", "#000")
+      .style("stroke-opacity", 0.5)
+      .style("stroke-width", "1.25px")
+      .style("cx", 0)
+        function updateColor(
+
+        ) {
           feature
             .transition()
             .duration(75)
@@ -208,7 +269,6 @@ let data;
 
         let play = function () {
           let x0 = i
-          console.log(i)
           mapColors(i)
           updateColor()
           let button = d3.select(this)
@@ -228,9 +288,8 @@ let data;
           mapColors(i)
           updateColor()
           updateDateView()
-          console.log(dateDomain[i])
           i++;
-          if (i >= data.length ) {
+          if (i >= data.length) {
             playing = false;
             i = 0;
             clearInterval(timer);
@@ -241,6 +300,10 @@ let data;
 
         playButton.on("click", play);
 
+        function update(h) {
+          handle.style("cx",h + "px")
+          step()
+        }
 
       }, // End render
 

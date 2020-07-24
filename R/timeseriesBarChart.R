@@ -5,7 +5,7 @@
 #' @import htmlwidgets
 #'
 #' @export
-timeseriesBarChart <- function(meta, data, shared = NULL, width = NULL, height = NULL, elementId = NULL) {
+timeseriesBarChart <- function(meta, data, title = NULL, subtitle = NULL, ylab = "PM₂.₅ (μg/m³)", shared = NULL, width = NULL, height = NULL, elementId = NULL) {
 
   if (crosstalk::is.SharedData(shared)) {
     # Using Crosstalk
@@ -21,6 +21,9 @@ timeseriesBarChart <- function(meta, data, shared = NULL, width = NULL, height =
   x = list(
     data = data,
     meta = meta,
+    title = title,
+    subtitle = subtitle,
+    ylab = ylab,
     shared = shared,
     settings = list(
       crosstalk_key = key,

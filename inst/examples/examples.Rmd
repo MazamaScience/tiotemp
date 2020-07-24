@@ -18,8 +18,9 @@ data <- s$data
 meta <- s$meta
 ```
 
-```{r, fig.height=14}
-timeseriesBarChart(meta, data)
+```{r, fig.height=10}
+timeseriesBarChart(meta[1,
+                        ], data)
 ```
 
 ```{r}
