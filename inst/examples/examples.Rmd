@@ -19,15 +19,22 @@ meta <- s$meta
 ```
 
 ```{r, fig.height=10}
-timeseriesBarChart(meta[1,
-                        ], data)
+timeseriesBarChart(meta, data)
 ```
 
 ```{r}
-timeseriesMap(data, meta)
+timeseriesMap1(data = data, meta = meta)
 ```
 
 ```{r}
+pas <- pas_load()
+pat <- pat_load(pas = pas, startdate = 20200101, enddate = 20200725, label = 'SCAH_27')
+s1 <- pat_createAirSensor(pat, FUN = AirSensor::PurpleAirQC_hourly_AB_00)
+s2 <- sensor_aggregate(s1)
+```
 
+
+```{r}
+timeseriesCalendar(s2$data, s2$meta)
 ```
 
