@@ -5,6 +5,10 @@
 #' @import htmlwidgets
 #'
 #' @export
+#' @examples
+#' library(AirSensor)
+#' sensor <- example_sensor
+#' timeseriesBarChart(meta = sensor$meta, data = sensor$data)
 timeseriesBarChart <- function(meta, data, title = NULL, subtitle = NULL, ylab = "PM₂.₅ (μg/m³)", shared = NULL, width = NULL, height = NULL, elementId = NULL) {
 
   if (crosstalk::is.SharedData(shared)) {

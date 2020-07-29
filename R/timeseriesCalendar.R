@@ -5,6 +5,10 @@
 #' @import htmlwidgets
 #'
 #' @export
+#' @examples
+#' library(AirSensor)
+#' sensor <- example_sensor
+#' timeseriesCalendar(meta = sensor$meta, data = sensor$data)
 timeseriesCalendar <- function(data, meta, width = NULL, height = NULL, elementId = NULL) {
 
   # forward options using x

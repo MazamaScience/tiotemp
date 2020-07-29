@@ -5,6 +5,10 @@
 #' @import htmlwidgets
 #'
 #' @export
+#' @examples
+#' library(AirSensor)
+#' sensor <- example_sensor
+#' timeseriesMap1(meta = sensor$meta, data = sensor$data)
 timeseriesMap1 <- function(meta, data, width = NULL, height = NULL, elementId = NULL) {
 
   # forward options using x
