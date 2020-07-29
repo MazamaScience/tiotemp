@@ -1,40 +1,67 @@
 ---
-title: "R Notebook"
-output:
-  html_document:
-    df_print: paged
+title: "eamples"
+author: "Mazama Science"
+date: "7/29/2020"
+output: html_document
+runtime: shiny
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 ```{r}
 library(tiotemp)
 library(AirSensor)
+```
 
+```{r}
 setArchiveBaseUrl("http://data.mazamascience.com/PurpleAir/v1") # SCAQMD sensors
+sensors <- sensor_load()
+labels <- sensors$meta$label
+```
+
+
+```{r, echo=FALSE}
+inputPanel(
+  selectInput("sensor", label = "Select Sensor",
+              choices = labels),
+  dateRangeInput("dates", label = "Select Date Domain")
+  #timeseriesBarChartOutput("barchart")
+)
 ```
 
 ```{r}
-s <- sensor_load()
-data <- s$data
-meta <- s$meta
-```
-
-```{r, fig.height=10}
-timeseriesBarChart(meta, data)
-```
-
-```{r}
-timeseriesMap1(data = data, meta = meta)
+updateData <- function() {
+  dates <- strftime(input$dates, "%Y%m%d")
+  sensor <- sensors %>% 
+    sensor_filterMeta(.data$label == input$sensor) %>% 
+    sensor_filterDate(startdate = dates[1], enddate = dates[2])
+}
 ```
 
 ```{r}
-pas <- pas_load()
-pat <- pat_load(pas = pas, startdate = 20200101, enddate = 20200725, label = 'SCAH_27')
-s1 <- pat_createAirSensor(pat, FUN = AirSensor::PurpleAirQC_hourly_AB_00)
-s2 <- sensor_aggregate(s1)
+renderTimeseriesMap1({
+  s <- updateData()
+  timeseriesMap1(sensors$meta, sensors$data)
+})
+```
+
+```{r}
+renderTimeseriesBarChart({
+  s <- updateData()
+  timeseriesBarChart(s$meta, s$data)
+})
 ```
 
 
 ```{r}
-timeseriesCalendar(s2$data, s2$meta)
+renderTimeseriesCalendar({
+  s <- updateData()
+  timeseriesCalendar(s$data, s$meta)
+})
 ```
+
+
+
 

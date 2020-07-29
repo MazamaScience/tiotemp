@@ -2,6 +2,7 @@ let ids;
 let dd;
 let pd;
 let mm;
+
 HTMLWidgets.widget({
 
   name: 'timeseriesMap1',
@@ -53,6 +54,8 @@ HTMLWidgets.widget({
 
       renderValue: function(x) {
 
+
+
         // Load the data
         let meta = HTMLWidgets.dataframeToD3(x.meta);
         let data = HTMLWidgets.dataframeToD3(x.data);
@@ -92,6 +95,9 @@ HTMLWidgets.widget({
         let dateDomain = data.map(d => { return new Date(d.datetime) });
         let sd = dateDomain.slice(1)[0],
             ed = dateDomain.slice(-1)[0]
+        let playing = true;
+        let currentDate = sd;
+
 
         let xScale = d3.scaleTime()
           .domain([sd, ed])
@@ -107,6 +113,29 @@ HTMLWidgets.widget({
         let slider = playCanvas.append("g")
           .attr("class", "slider")
           .attr("transform", `translate(100, 80)`);
+
+        let playButton = playCanvas.append("g")
+          .attr("class", "button")
+          .append("polygon")
+          .attr("points", "70,70 70,100 85,85")
+          .attr("stroke", "black")
+          .attr("stroke-width", 2)
+          .attr("fill", "black")
+          .text("play")
+
+        playButton.on("click", () => {
+          let button = d3.select(this)
+              if (button.text() == "Pause") {
+      playing = false;
+      clearInterval(timer);
+      // timer = 0;
+      button.text("Play");
+    } else {
+      playing = true;
+      timer = setInterval(step, 250);
+      button.text("Pause");
+    }
+          });
 
         slider.on('mouseover', function () {
           map.dragging.disable();
@@ -137,7 +166,7 @@ HTMLWidgets.widget({
               d3.drag()
               .on("start.interrupt",() => { slider.interrupt(); })
               // pass in inverted xscale (i.e. date)
-              .on("start drag", () => { update(xScale.invert(d3.event.x)) })
+              .on("start drag", () => { currentDate = xScale.invert(d3.event.x); update(currentDate) })
             );
 
         // Add the slider track overlay
@@ -244,6 +273,18 @@ HTMLWidgets.widget({
           updatePointColor(x);
         };
 
+        function step() {
+          update(currentDate)
+          // Add an hour
+          currentDate.setHours(currentDate.getHours() + 1)
+          // reset if reach to end
+          if ( currentDate > ed ) {
+            playing = false
+            currentDate = sd
+            clearInterval(timer)
+            playButton.text("Play");
+          }
+        };
 
 
       },
