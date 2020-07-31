@@ -22,7 +22,7 @@ labels <- sensors$meta$label
 
 
 ```{r}
-timeseriesMap1(sensors$meta, sensors$data)
+timeseriesMap(sensors$meta, sensors$data)
 ```
 
 ```{r}
