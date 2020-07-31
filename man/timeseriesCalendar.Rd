@@ -9,3 +9,8 @@ timeseriesCalendar(data, meta, width = NULL, height = NULL, elementId = NULL)
 \description{
 <Add Description>
 }
+\examples{
+library(AirSensor)
+sensor <- example_sensor
+timeseriesCalendar(meta = sensor$meta, data = sensor$data)
+}

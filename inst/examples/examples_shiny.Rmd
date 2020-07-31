@@ -1,0 +1,52 @@
+---
+title: "examples_shiny"
+author: "Mazama Science"
+date: "7/29/2020"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tiotemp)
+library(AirSensor)
+```
+
+```{r}
+setArchiveBaseUrl("http://data.mazamascience.com/PurpleAir/v1") # SCAQMD sensors
+sensors <- sensor_load()
+labels <- sensors$meta$label
+```
+
+
+```{r, echo=FALSE}
+inputPanel(
+  selectInput("sensor", label = "Select Sensor",
+              choices = labels),
+  dateRangeInput("dates", label = "Select Date Domain")
+)
+```
+
+```{r}
+updateData <- function() {
+  dates <- strftime(input$dates, "%Y%m%d")
+  sensor <- sensors %>% 
+    sensor_filterMeta(.data$label == input$sensor) %>% 
+    sensor_filterDate(startdate = dates[1], enddate = dates[2])
+}
+```
+
+```{r}
+renderTimeseriesMap({
+  s <- updateData()
+  timeseriesMap(sensors$data, sensors$meta)
+})
+```
+
+
+
+
+

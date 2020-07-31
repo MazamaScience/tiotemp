@@ -22,7 +22,8 @@ HTMLWidgets.widget({
       weekFormat = d3.timeFormat("%U"),
       format = d3.timeFormat("%Y-%m-%d"),
       titleFormat = d3.utcFormat("%a, %d-%b"),
-      monthFormat = d3.timeFormat("%B")
+      monthFormat = d3.timeFormat("%B"),
+      yearFormat = d3.timeFormat("%Y");
 
     // Create canvas
     let canvas = d3.select(el)

@@ -19,3 +19,8 @@ timeseriesBarChart(
 \description{
 <Add Description>
 }
+\examples{
+library(AirSensor)
+sensor <- example_sensor
+timeseriesBarChart(meta = sensor$meta, data = sensor$data)
+}

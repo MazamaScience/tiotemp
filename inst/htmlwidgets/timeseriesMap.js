@@ -1,5 +1,3 @@
-let data;
-let xScale;
 HTMLWidgets.widget({
 
   name: 'timeseriesMap',
@@ -8,304 +6,338 @@ HTMLWidgets.widget({
 
   factory: function (el, width, height) {
 
-    // TODO: define shared variables for this instance
+    /*
+    Helpers
+    */
 
-    let map = L
-      .map(el.id)
-      .setView([35.5, -100.5], 6); // center position + zoom
-
-    // Add a tile to the map = a background. Comes from OpenStreetmap
-    L.tileLayer(
-      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
-        maxZoom: 18,
-      }).addTo(map)
-
-    // Add a svg layer to the map
-    L.svg().addTo(map);
-
-    // We pick up the SVG from the map object
-    let svgMap = d3.select("#" + el.id)
-      .select(".leaflet-pane")
-      .select("svg")
-      .append("g");
-
-    // Playback control layer
-    let svgPlayback = d3.select("#" + el.id)
-      .select(".leaflet-control-container")
-      .select(".leaflet-bottom")
-      .append("div")
-      .attr("class", "leaflet-control");
-
-
-    let canvas = d3.select("#" + el.id)
-      .select(".leaflet-control-container")
-      .select(".leaflet-bottom")
-      .append("svg")
-      .attr("class", "leaflet-control")
-      .attr("width", width)
-    .attr("height", height/12);
-
-    // Store mouseover focus data
-    let focusColor;
-
-    // color ramp map
-    let col = d3.scaleThreshold()
+    // Create color ramp profile
+    let colorMap = d3.scaleThreshold()
       .domain([12, 35, 55, 75, 100])
       // SCAQMD profile
       .range(["#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a"]);
 
+    let formatDateIntoDay = d3.timeFormat("%b %d");
+    let formatDateIntoHr = d3.timeFormat("%b %d %H:00");
+    let strictIsoParse = d3.utcParse("%Y-%m-%dT%H:%M:%SZ");
+    let roundUtcDate = d3.utcFormat("%Y-%m-%dT%H:00:00Z");
 
-    const parseDate = d3.timeParse("%Y-%m-%dT%H:%M:%SZ");
-    // Bisect date long to left side of hour
-    const bisect = d3.bisector(d => {
-      return d.date
-    }).left;
+    let average = (array) => array.reduce((a, b) => a + b) / array.length;
 
-    //const sensorIDs;
+    /*
+    Create the map as the base for for appending svgs
+    */
+
+    // Create map
+    let map = L.map(el.id); // center position + zoom
+
+    // Add a tile to the map = a background. Comes from OpenStreetmap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
+        maxZoom: 18,
+      }).addTo(map)
 
 
     return {
       renderValue: function (x) {
 
+        // Load the data
+        const meta = HTMLWidgets.dataframeToD3(x.meta);
+        const data = HTMLWidgets.dataframeToD3(x.data);
 
-        let focusData;
-        let sensorIDs;
-        let focusDate;
-        let focusColor;
-        let focusCoords;
-
-        let meta;
-        //let data;
-
-        meta = HTMLWidgets.dataframeToD3(x.meta);
-        data = HTMLWidgets.dataframeToD3(x.data);
-
-
-        let slider = canvas.append("g")
-          .attr("class", "slider")
-          .attr("transform", `translate(${50},${height/12-10})`)
-
-
-        // Add a LatLng object from meta coords
+        // Add a LatLng object for leaflet to the metadata
         meta.forEach(d => {
           d.LatLng = new L.LatLng(d.latitude, d.longitude)
         });
 
-        let mouseIn = function (d) {
+        // Get center cords from meta and set the view to center
+        centerLat = average(meta.map(d => { return d.latitude }));
+        centerLon = average(meta.map(d => { return d.longitude }));
+        map.setView([centerLat, centerLon], 6);
+
+        // Index sensorLabels //sensorIDs
+        let sensorIds = meta.map(d => { return d.monitorID });
+
+        let dateDomain = data.map(d => { return new Date(d.datetime) });
+        let sd = dateDomain.slice(1)[0],
+            ed = dateDomain.slice(-1)[0]
+        let currentDate = sd;
+
+        // Create two scales; the x scale of the canvas itself,
+        // and the x date scale of the data for mapping datetimes to index
+        let xScale = d3.scaleTime()
+          .domain([sd, ed])
+          .rangeRound([0, width/2])
+          .clamp(true);
+        let dateScale = d3.scaleTime()
+          .domain([sd, ed])
+          .rangeRound([0, data.length])
+          .clamp(true);
+
+        let playing = true;
+
+        // Create point location data object from each sensor label
+        // contains leaflet latlng obj, hourly data, and mapped point color
+        let pointData = sensorIds.map(id => {
+          return {
+            id: id,
+            label: meta.filter(d => { return d.monitorID == id })[0].label,
+            community: meta.filter(d => { return d.monitorID == id })[0].community,
+            LatLng: meta.filter(d => { return d.monitorID == id })[0].LatLng,
+            data: data.map(d => {
+              return {
+                date: new Date(d.datetime),
+                value: +d[id],
+                color: colorMap(+d[id])
+              }
+            })
+          }
+        });
+
+        // Update the points position on map move
+        function updatePointLocation() {
+          d3.selectAll(".point")
+            .attr("cx", d => { return map.latLngToLayerPoint(d.LatLng).x })
+            .attr("cy", d => { return map.latLngToLayerPoint(d.LatLng).y })
+        };
+
+        function updatePointColor(x) {
+          let roundedDate = new Date(d3.utcFormat("%Y-%m-%dT%H:00:00.%LZ")(x))
+          let i = dateScale(roundedDate);
+          let dateIndex = (i < 0 ? 0 : i) | 0;
+          d3.selectAll(".point")
+            .transition()
+            .duration(100)
+            .style("fill", (d, i) => { return d.data[dateIndex].color });
+        }
+
+        // Enlarge on mouseover
+        function mouseOverPoint() {
           d3.select(d3.event.target)
             .raise()
             .transition()
             .duration(100)
             .attr("r", 12);
-        }
+        };
 
-        let mouseOut = function (d) {
+        // Return radius on mouseout
+        function mouseOutPoint() {
           d3.select(d3.event.target)
             .transition()
             .duration(150)
             .attr("r", 8);
-        }
+        };
 
-        let feature = svgMap.selectAll("mycircle")
-          .data(meta)
-          .enter()
-          .append("circle")
-          .attr("cx", d => {
-            map.latLngToLayerPoint(d.LatLng).x
-          })
-          .attr("cy", d => {
-            map.latLngToLayerPoint(d.LatLng).y
-          })
-          .attr("r", 8)
-          .style("fill", "red")
-          .attr("stroke", "white")
-          .attr("stroke-width", 2)
-          .attr("fill-opacity", 0.75)
-          .attr("stoke-opacity", 0.75)
-          .on("mouseover", mouseIn)
-          .on("mouseout", mouseOut)
-          .attr("pointer-events", "visible");
-        //.on("click", onMarkerClick)
+        // draw the points on the map svg
+        let drawPoints = function(pointData) {
 
-        // Function that update circle position if something change
-        function updateMap() {
-          //g.selectAll("circle")
-          feature
-            .attr("cx", function (d) {
-              return map.latLngToLayerPoint(d.LatLng).x
-            })
-            .attr("cy", function (d) {
-              return map.latLngToLayerPoint(d.LatLng).y
-            })
-        }
+          // create the canvas
+          let pointCanvas = d3.select("#" + el.id)
+            .select(".leaflet-pane")
+            .select("svg")
+            .append("g");
 
-        map.on("moveend", updateMap);
+          // Add points
+          let points = pointCanvas.selectAll(".point")
+            .data(pointData)
+            .enter()
+              .append("circle")
+              .attr("class", "point")
+              .attr("cx", d => { return map.latLngToLayerPoint(d.LatLng).x })
+              .attr("cy", d => { return map.latLngToLayerPoint(d.LatLng).y })
+              .attr("r", 8)
+              // init fill color as transparent
+              .style("fill", "transparent")
+              .attr("stroke", "white")
+              .attr("stroke-width", 2)
+              .attr("fill-opacity", 0.75)
+              .attr("stoke-opacity", 0.75)
+              .attr("pointer-events", "visible");
 
-        updateMap();
+          // Watch points
+          points
+            .on("mouseover", mouseOverPoint)
+            .on("mouseout", mouseOutPoint);
 
-        sensorIDs = meta.map(d => {
-          return d.monitorID
-        })
-
-
-        focusData = sensorIDs.map(id => {
-          return {
-            id: id,
-            data: data.map(d => {
-              return {
-                date: d.datetime,
-                value: +d[id],
-                color: col(+d[id])
-              }
-            })
-          }
-        })
-
-
-
-        let dateDomain = data.map(d => {
-          return d.datetime
-        });
-        let i = 0;
-        focusDate = dateDomain[i]
-
-
-        function mapColors(x0) {
-
-          // Map the color to each timestep on cursor
-          focusColor = focusData.map(d => {
-            return {
-              id: d.id,
-              date: d.data[i].date,
-              color: d.data[i].color
-            }
-          });
+          // init colors on startdate
+          updatePointColor(sd);
 
         };
 
-        // create x scale
-      xScale = d3.scaleTime()
-          .domain(dateDomain)//d3.extent(data, d => { return parseDate(d.datetime) }))
-          .range([0, width])
-          .clamp(true);
+        // Update the slider handle position
+        function updateHandle(x) {
+          d3.selectAll(".handle").style("cx", xScale(x) + "px")
+          d3.selectAll(".label")
+            .attr("x", xScale(x))
+            .text(formatDateIntoHr(x))
+        };
 
-        slider.append("line")
-          .attr("class", "track")
-          .attr("x1", xScale.range()[0])
-          .attr("x2", xScale.range()[1])
-          .style("stroke", "#000")
-          .style("stroke-width", "10px")
-          .style("stroke-opacity", 0.3)
-          .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-    .attr("class", "track-inset")
-      .style("stroke", "#dcdcdc")
-      .style("stroke-width", "8px")
-  .select(function() { return this.parentNode.appendChild(this.cloneNode(true)); })
-    .attr("class", "track-overlay")
-      .style("stroke-width", "50px")
-      .style("stroke", "transparent")
-      .call(d3.drag()
-        .on("start.interrupt", function() { slider.interrupt(); })
-        .on("start drag", function() {
-          currentValue = d3.event.x;
-          update(currentValue);
-        })
-    );
-
-    slider.insert("g", ".track-overlay")
-    .attr("class", "ticks")
-    .attr("transform", "translate(0," + 18 + ")")
-  .selectAll("text")
-    .data(xScale.ticks(10))
-    .enter()
-    .append("text")
-    .attr("x", x)
-    .attr("y", 10)
-    .attr("text-anchor", "middle");
-
-    let handle = slider.insert("circle", ".track-overlay")
-      .attr("class", "handle")
-      .attr("r", 9)
-      .style("fill", "#fff")
-      .style("stroke", "#000")
-      .style("stroke-opacity", 0.5)
-      .style("stroke-width", "1.25px")
-      .style("cx", 0)
-        function updateColor(
-
-        ) {
-          feature
-            .transition()
-            .duration(75)
-            .style("fill", (d, i) => {
-              return focusColor[i].color
-            })
-        }
-
-        function updateDateView() {
-          dateView.text(dateDomain[i])
-        }
-
-
-        let playButton = svgPlayback.append("button") // Append a text element
-          .attr("id", "play") // Give it the font-awesome class
-          .style("transform", "translate(50px,-100px)")
-          .style("font-size", "2em")
-          .style("color", "red")
-          .text("Play")
-          .attr("pointer-events", "visible");
-
-        let dateView = svgPlayback.append("text")
-          .attr("id", "date") // Give it the font-awesome class
-          .style("transform", "translate(50px,-10px)")
-          .style("font-size", "2em")
-          .style("color", "black")
-          .text(dateDomain[i])
-          .attr("pointer-events", "visible");
-
-
-        let playing = false;
-
-        let play = function () {
-          let x0 = i
-          mapColors(i)
-          updateColor()
-          let button = d3.select(this)
-          console.log(button.text())
-          if (button.text() == "Pause") {
-            playing = false;
-            clearInterval(timer);
-            playButton.text("Play");
-          } else {
-            playing = true;
-            timer = setInterval(step, 250);
-            button.text("Pause");
-          }
-        }
+        // Update the time index of the slider handle and point color
+        function timeUpdate(x) {
+          updateHandle(x)
+          updatePointColor(x);
+        };
 
         function step() {
-          mapColors(i)
-          updateColor()
-          updateDateView()
-          i++;
-          if (i >= data.length) {
-            playing = false;
-            i = 0;
-            clearInterval(timer);
-            // timer = 0;
-            playButton.text("Play");
+          timeUpdate(currentDate)
+          // Add an hour
+          currentDate.setHours(currentDate.getHours() + 1)
+          // reset if reach to end
+          if ( currentDate > ed ) {
+            playing = false
+            currentDate = sd
+            clearInterval(timer)
+            d3.selectAll(".button").text("Play");
           }
-        }
+        };
 
-        playButton.on("click", play);
+        function mouseOverButton() {
+          d3.selectAll(".svg-inline--fa")
+            .transition()
+            .duration(250)
+            .style("opacity", 0.75)
+          };
 
-        function update(h) {
-          handle.style("cx",h + "px")
-          step()
-        }
+        function mouseOutButton() {
+          d3.selectAll(".svg-inline--fa")
+            .transition()
+            .duration(250)
+            .style("opacity", 1)
+        };
 
-      }, // End render
+        let drawPlayback = function() {
+
+          // remove old slider/playbutton hack
+          d3.selectAll(".slider").remove();
+
+          let playbackWidth = width,
+              playbackHeight = height*0.1;
+
+          let xSlider = playbackWidth*0.25,
+              ySlider = playbackHeight*0.5;
+          let xButton = xSlider - 40,
+              yButton = ySlider - 15;
+
+          // create playback svg layer
+          let playbackCanvas = d3.select("#" + el.id)
+            .select(".leaflet-control-container")
+            .select(".leaflet-bottom")
+            .append("svg")
+            .attr("class", "leaflet-control")
+            .attr("width", playbackWidth)
+            .attr("height", playbackHeight);
+
+          // create slider container
+          let slider = playbackCanvas
+            .append("g")
+            .attr("class", "slider")
+            .attr("transform", `translate(${xSlider}, ${ySlider})`);
+
+          // restrict map mouse events in the slider container
+          slider.on('mouseover', function () { map.dragging.disable() })
+                .on('mouseout', function () { map.dragging.enable() });
+
+          // Add slider track and drag indexing
+          slider.append("line")
+            .attr("class", "track")
+            .attr("x1", xScale.range()[0])
+            .attr("x2", xScale.range()[1])
+            .style("stroke", "#000")
+            .style("stroke-width", "10px")
+            .style("stroke-linecap", "round")
+            .style("stroke-opacity", 0.3)
+            .select( function() { return this.parentNode.appendChild(this.cloneNode(true)) })
+              .attr("class", "track-inset")
+              .style("stroke", "#dcdcdc")
+              .style("stroke-width", "8px")
+              .style("stroke-linecap", "round")
+            .select(function() { return this.parentNode.appendChild(this.cloneNode(true)) })
+              .attr("class", "track-overlay")
+              .style("stroke-width", "50px")
+              .style("stroke-linecap", "round")
+              .style("stroke", "transparent")
+              .call(
+                d3.drag()
+                .on("start.interrupt",() => { slider.interrupt(); })
+                // pass in inverted xscale (i.e. date)
+                .on("start drag", () => {
+                  currentDate = xScale.invert(d3.event.x);
+                  timeUpdate(currentDate)
+                })
+              );
+
+          // Add the slider track overlay
+          let track = slider.insert("g", ".track-overlay")
+            .attr("class", "ticks")
+            .attr("transform", "translate(0," + 18 + ")")
+            .selectAll("text")
+              .data(xScale.ticks())
+              .enter()
+                .append("text")
+                .attr("x", xScale)
+                .attr("y", 10)
+                .attr("text-anchor", "middle")
+                .text(function(d) { return formatDateIntoDay(d) });
+
+                  // Create slider handle
+        let handle = slider.insert("circle", ".track-overlay")
+          .attr("class", "handle")
+          .attr("r", 9)
+          .style("fill", "#fff")
+          .style("stroke", "#000")
+          .style("stroke-opacity", 0.5)
+          .style("stroke-width", "1.25px")
+          .style("cx", 0);
+
+        // Create label
+        let label = slider.append("text")
+          .attr("class", "label")
+          .attr("text-anchor", "middle")
+          .text(formatDateIntoHr(sd))
+          .attr("transform", "translate(0," + (-25) + ")");
+
+        // Create play button :(
+        let playButton = playbackCanvas.append("g")
+          .attr("class", "button")
+          .append('svg:foreignObject')
+          		.attr('height', '40px')
+              .attr('width', '40px')
+              .html('<i class="fas fa-play"></i>')
+              .attr("x", xButton)
+              .attr("y", yButton)
+              .style("font-size", "1.7em")
+              .style("color", "black")
+
+        // watch for click
+          playButton.on("click", () => {
+            let button = d3.selectAll(".svg-inline--fa")
+            if (playing) {
+              playing = false;
+              clearInterval(timer);
+              button.html('<i class="fas fa-play"></i>')
+              // timer = 0;
+            } else {
+              playing = true;
+              timer = setInterval(step, 250);
+              button.html('<i class="fas fa-pause"></i>')
+            }
+          });
+
+          playButton
+            .on("mouseover", mouseOverButton)
+            .on("mouseout", mouseOutButton)
+
+        };
+
+        // Add a svg layer to the map
+        L.svg().addTo(map);
+
+        // Draw the points on the map
+        drawPoints(pointData);
+        drawPlayback();
+        // Update point locations on map changes
+        map.on("moveend", updatePointLocation);
+
+      },
 
       resize: function (width, height) {
 

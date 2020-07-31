@@ -3,7 +3,6 @@ title: "eamples"
 author: "Mazama Science"
 date: "7/29/2020"
 output: html_document
-runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
@@ -22,46 +21,29 @@ labels <- sensors$meta$label
 ```
 
 
-```{r, echo=FALSE}
-inputPanel(
-  selectInput("sensor", label = "Select Sensor",
-              choices = labels),
-  dateRangeInput("dates", label = "Select Date Domain")
-  #timeseriesBarChartOutput("barchart")
-)
+```{r}
+timeseriesMap1(sensors$meta, sensors$data)
 ```
 
 ```{r}
-updateData <- function() {
-  dates <- strftime(input$dates, "%Y%m%d")
-  sensor <- sensors %>% 
-    sensor_filterMeta(.data$label == input$sensor) %>% 
-    sensor_filterDate(startdate = dates[1], enddate = dates[2])
-}
-```
-
-```{r}
-renderTimeseriesMap1({
-  s <- updateData()
-  timeseriesMap1(sensors$meta, sensors$data)
-})
-```
-
-```{r}
-renderTimeseriesBarChart({
-  s <- updateData()
-  timeseriesBarChart(s$meta, s$data)
-})
+timeseriesBarChart(sensors$meta, sensors$data)
 ```
 
 
 ```{r}
-renderTimeseriesCalendar({
-  s <- updateData()
-  timeseriesCalendar(s$data, s$meta)
-})
+annual <- pat_load(pas = pas_load(), label = 'SCSC_33', startdate = 20180102, enddate = 20181231)
+
+sensor_hr <- pat_createAirSensor(annual)
+
+sensors_24hr <- sensor_aggregate(sensor_hr)
+
+timeseriesCalendar(sensors_24hr$data, sensors_24hr$meta)
 ```
 
 
 
+
+```{r}
+timseriesMap(data = sensors$data, meta = sensors$meta)
+```
 
