@@ -1,3 +1,5 @@
+let selectedMapSensor = null;
+
 HTMLWidgets.widget({
 
   name: 'timeseriesMap',
@@ -9,12 +11,6 @@ HTMLWidgets.widget({
     /*
     Helpers
     */
-
-    // Create color ramp profile
-    let colorMap = d3.scaleThreshold()
-      .domain([12, 35, 55, 75, 100])
-      // SCAQMD profile
-      .range(["#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a"]);
 
     let formatDateIntoDay = d3.timeFormat("%b %d");
     let formatDateIntoHr = d3.timeFormat("%b %d %H:00");
@@ -40,6 +36,11 @@ HTMLWidgets.widget({
     return {
       renderValue: function (x) {
 
+        // Create color ramp profile using options
+        let colorMap = d3.scaleThreshold()
+          .domain(x.breaks)
+          .range(x.colors);
+
         // Load the data
         const meta = HTMLWidgets.dataframeToD3(x.meta);
         const data = HTMLWidgets.dataframeToD3(x.data);
@@ -54,8 +55,8 @@ HTMLWidgets.widget({
         centerLon = average(meta.map(d => { return d.longitude }));
         map.setView([centerLat, centerLon], 6);
 
-        // Index sensorLabels //sensorIDs
-        let sensorIds = meta.map(d => { return d.monitorID });
+        // Index ID using passed in index string
+        let indexIds = meta.map(d => { return d[x.index] });
 
         let dateDomain = data.map(d => { return new Date(d.datetime) });
         let sd = dateDomain.slice(1)[0],
@@ -77,12 +78,12 @@ HTMLWidgets.widget({
 
         // Create point location data object from each sensor label
         // contains leaflet latlng obj, hourly data, and mapped point color
-        let pointData = sensorIds.map(id => {
+        let pointData = indexIds.map(id => {
           return {
             id: id,
-            label: meta.filter(d => { return d.monitorID == id })[0].label,
-            community: meta.filter(d => { return d.monitorID == id })[0].community,
-            LatLng: meta.filter(d => { return d.monitorID == id })[0].LatLng,
+            label: meta.filter(d => { return d[x.index] == id })[0][x.label],
+            community: meta.filter(d => { return d[x.index] == id })[0].community,
+            LatLng: meta.filter(d => { return d[x.index] == id })[0].LatLng,
             data: data.map(d => {
               return {
                 date: new Date(d.datetime),
@@ -93,6 +94,26 @@ HTMLWidgets.widget({
           }
         });
 
+        // hightlight selected point
+        let selectPoint = function(d) {
+          restorePoints();
+          d3.selectAll(`[point-label=${d}]`)
+            .raise()
+            .transition()
+            .duration(200)
+            .attr("stroke-width", 3)
+            .attr("fill-opacity", 1)
+            .style("stroke-opacity", 0.75)
+            .style("stroke", "#282b30");
+        };
+
+        // Watch the input id to update map point selection from
+        if ( x.inputId != null ) {
+          $("#" + x.inputId).on("change", function() {
+            selectPoint(this.value)
+          });
+        };
+
         // Update the points position on map move
         function updatePointLocation() {
           d3.selectAll(".point")
@@ -100,35 +121,64 @@ HTMLWidgets.widget({
             .attr("cy", d => { return map.latLngToLayerPoint(d.LatLng).y })
         };
 
-        function updatePointColor(x) {
+        // Update the point color with timestamp x
+        function updatePointFill(x) {
           let roundedDate = new Date(d3.utcFormat("%Y-%m-%dT%H:00:00.%LZ")(x))
           let i = dateScale(roundedDate);
           let dateIndex = (i < 0 ? 0 : i) | 0;
           d3.selectAll(".point")
             .transition()
             .duration(100)
-            .style("fill", (d, i) => { return d.data[dateIndex].color });
-        }
+            .style("fill", (d, i) => { return d.data[dateIndex].color })
+          };
+
+        // restore all the colors after selection
+        function restorePoints() {
+          d3.selectAll(".point")
+            .transition()
+            .duration(200)
+            .style("stroke", "white")
+            .attr("fill-opacity", 0.75)
+            .attr("stroke-width", 2);
+        };
 
         // Enlarge on mouseover
         function mouseOverPoint() {
-          d3.select(d3.event.target)
-            .raise()
+          d3.select(this)
             .transition()
             .duration(100)
-            .attr("r", 12);
+            .attr("r", 10.5)
+            .style("cursor", "pointer");
+            //.style("stroke", "#54575b")
+            //.style("stroke-opacity", 0.4)
+            //.delay(500);
         };
 
         // Return radius on mouseout
         function mouseOutPoint() {
-          d3.select(d3.event.target)
+          d3.select(this)
             .transition()
             .duration(150)
-            .attr("r", 8);
+            .attr("r", 8.5)
+            //.style("stroke", "white");
+        };
+
+        function mouseClickPoint() {
+          // Better way to access this data??
+          selectedMapSensor = d3.select(this)._groups[0][0].__data__[x.label];
+          selectPoint(selectedMapSensor);
+
+          // If the shiny input id is provided, update the input
+          if(x.inputId != null) {
+            Shiny.setInputValue(x.inputId, selectedMapSensor);
+          }
+
         };
 
         // draw the points on the map svg
         let drawPoints = function(pointData) {
+
+          d3.selectAll(".point").remove();
 
           // create the canvas
           let pointCanvas = d3.select("#" + el.id)
@@ -142,9 +192,10 @@ HTMLWidgets.widget({
             .enter()
               .append("circle")
               .attr("class", "point")
+              .attr("point-label", d => { return d.label })
               .attr("cx", d => { return map.latLngToLayerPoint(d.LatLng).x })
               .attr("cy", d => { return map.latLngToLayerPoint(d.LatLng).y })
-              .attr("r", 8)
+              .attr("r", 8.5)
               // init fill color as transparent
               .style("fill", "transparent")
               .attr("stroke", "white")
@@ -156,17 +207,18 @@ HTMLWidgets.widget({
           // Watch points
           points
             .on("mouseover", mouseOverPoint)
-            .on("mouseout", mouseOutPoint);
+            .on("mouseout", mouseOutPoint)
+            .on("click", mouseClickPoint);
 
           // init colors on startdate
-          updatePointColor(sd);
+          updatePointFill(sd);
 
         };
 
         // Update the slider handle position
         function updateHandle(x) {
           d3.selectAll(".handle").style("cx", xScale(x) + "px")
-          d3.selectAll(".label")
+          d3.selectAll(".slider-label")
             .attr("x", xScale(x))
             .text(formatDateIntoHr(x))
         };
@@ -174,7 +226,7 @@ HTMLWidgets.widget({
         // Update the time index of the slider handle and point color
         function timeUpdate(x) {
           updateHandle(x)
-          updatePointColor(x);
+          updatePointFill(x);
         };
 
         function step() {
@@ -183,10 +235,9 @@ HTMLWidgets.widget({
           currentDate.setHours(currentDate.getHours() + 1)
           // reset if reach to end
           if ( currentDate > ed ) {
-            playing = false
             currentDate = sd
             clearInterval(timer)
-            d3.selectAll(".button").text("Play");
+            playing = false
           }
         };
 
@@ -195,6 +246,7 @@ HTMLWidgets.widget({
             .transition()
             .duration(250)
             .style("opacity", 0.75)
+            .style("cursor", "pointer");
           };
 
         function mouseOutButton() {
@@ -208,9 +260,10 @@ HTMLWidgets.widget({
 
           // remove old slider/playbutton hack
           d3.selectAll(".slider").remove();
+          d3.selectAll(".playback-button").remove();
 
           let playbackWidth = width,
-              playbackHeight = height*0.1;
+              playbackHeight = height*0.18;
 
           let xSlider = playbackWidth*0.25,
               ySlider = playbackHeight*0.5;
@@ -224,7 +277,8 @@ HTMLWidgets.widget({
             .append("svg")
             .attr("class", "leaflet-control")
             .attr("width", playbackWidth)
-            .attr("height", playbackHeight);
+            .attr("height", playbackHeight)
+            //.style("margin-bottom", "3em");
 
           // create slider container
           let slider = playbackCanvas
@@ -278,7 +332,7 @@ HTMLWidgets.widget({
                 .attr("text-anchor", "middle")
                 .text(function(d) { return formatDateIntoDay(d) });
 
-                  // Create slider handle
+        // Create slider handle
         let handle = slider.insert("circle", ".track-overlay")
           .attr("class", "handle")
           .attr("r", 9)
@@ -289,15 +343,15 @@ HTMLWidgets.widget({
           .style("cx", 0);
 
         // Create label
-        let label = slider.append("text")
-          .attr("class", "label")
+        let sliderLabel = slider.append("text")
+          .attr("class", "slider-label")
           .attr("text-anchor", "middle")
           .text(formatDateIntoHr(sd))
           .attr("transform", "translate(0," + (-25) + ")");
 
         // Create play button :(
         let playButton = playbackCanvas.append("g")
-          .attr("class", "button")
+          .attr("class", "playback-button")
           .append('svg:foreignObject')
           		.attr('height', '40px')
               .attr('width', '40px')
@@ -305,20 +359,19 @@ HTMLWidgets.widget({
               .attr("x", xButton)
               .attr("y", yButton)
               .style("font-size", "1.7em")
-              .style("color", "black")
+              .style("color", "#282b3")
 
         // watch for click
           playButton.on("click", () => {
-            let button = d3.selectAll(".svg-inline--fa")
+            let button = d3.selectAll(".playback-button").selectAll(".svg-inline--fa")
             if (playing) {
               playing = false;
               clearInterval(timer);
-              button.html('<i class="fas fa-play"></i>')
-              // timer = 0;
+              button.html('<i class="fas fa-play"></i>');
             } else {
               playing = true;
               timer = setInterval(step, 250);
-              button.html('<i class="fas fa-pause"></i>')
+              button.html('<i class="fas fa-pause"></i>');
             }
           });
 
@@ -332,8 +385,8 @@ HTMLWidgets.widget({
         L.svg().addTo(map);
 
         // Draw the points on the map
-        drawPoints(pointData);
-        drawPlayback();
+        let points = drawPoints(pointData);
+        let playback = drawPlayback();
         // Update point locations on map changes
         map.on("moveend", updatePointLocation);
 

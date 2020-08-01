@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tiotemp)
 library(AirSensor)
+library(shiny)
 ```
 
 ```{r}
@@ -41,8 +42,7 @@ updateData <- function() {
 
 ```{r}
 renderTimeseriesMap({
-  s <- updateData()
-  timeseriesMap(sensors$data, sensors$meta)
+  timeseriesMap(sensors$data, sensors$meta, shinyInputId = "sensor")
 })
 ```
 

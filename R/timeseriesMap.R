@@ -1,11 +1,34 @@
-#' <Add Title>
+#' Timeseries Leaflet Map
 #'
-#' <Add Description>
+#' A timeseries leaflet map that displays point location timeseries data and
+#' allows playback.
+#'
+#' @param data
+#' @param meta
 #'
 #' @import htmlwidgets
 #'
 #' @export
-timeseriesMap <- function(data, meta, shared = NULL, width = NULL, height = NULL, elementId = NULL) {
+timeseriesMap <- function(
+  data,
+  meta,
+  options = list(
+    index = "monitorID",
+    label = "label",
+    breaks = c(12, 35, 55, 75, 100),
+    colors = c("#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a")
+  ),
+  shinyInputId = NULL
+  ) {
+
+  width = options$width
+  height = options$height
+  shared = options$shared
+  elementId = options$elementId
+  index = options$index
+  label = options$label
+  breaks = options$breaks
+  colors = options$colors
 
   if (crosstalk::is.SharedData(shared)) {
     # Using Crosstalk
@@ -22,7 +45,12 @@ timeseriesMap <- function(data, meta, shared = NULL, width = NULL, height = NULL
   x = list(
     data = data,
     meta = meta,
+    index = index,
+    label = label,
+    breaks = breaks,
+    colors = colors,
     shared = shared,
+    inputId = shinyInputId,
     settings = list(
       crosstalk_key = key,
       crosstalk_group = group

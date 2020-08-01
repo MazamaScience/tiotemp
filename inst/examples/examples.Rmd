@@ -40,10 +40,3 @@ sensors_24hr <- sensor_aggregate(sensor_hr)
 timeseriesCalendar(sensors_24hr$data, sensors_24hr$meta)
 ```
 
-
-
-
-```{r}
-timseriesMap(data = sensors$data, meta = sensors$meta)
-```
-

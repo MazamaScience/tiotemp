@@ -2,17 +2,20 @@
 % Please edit documentation in R/timeseriesMap.R
 \name{timeseriesMap}
 \alias{timeseriesMap}
-\title{<Add Title>}
+\title{Timeseries Leaflet Map}
 \usage{
 timeseriesMap(
   data,
   meta,
-  shared = NULL,
-  width = NULL,
-  height = NULL,
-  elementId = NULL
+  options = list(index = "monitorID", label = "label", breaks = c(12, 35, 55, 75, 100),
+    colors = c("#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a")),
+  shinyInputId = NULL
 )
 }
+\arguments{
+\item{meta}{}
+}
 \description{
-<Add Description>
+A timeseries leaflet map that displays point location timeseries data and
+allows playback.
 }
