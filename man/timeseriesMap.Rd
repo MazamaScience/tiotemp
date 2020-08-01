@@ -4,18 +4,33 @@
 \alias{timeseriesMap}
 \title{Timeseries Leaflet Map}
 \usage{
-timeseriesMap(
-  data,
-  meta,
-  options = list(index = "monitorID", label = "label", breaks = c(12, 35, 55, 75, 100),
-    colors = c("#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a")),
-  shinyInputId = NULL
-)
+timeseriesMap(data, meta, index = "monitorID", label = "label", ...)
 }
 \arguments{
-\item{meta}{}
+\item{data}{A data.frame that contains the hourly-resolution point location
+timeseries data. See Details.}
+
+\item{meta}{A data.frame that contains the point location metadata. See Details.}
+
+\item{index}{A string to index point location metadata and temporal data by.}
+
+\item{label}{A string to index point location metadata label by.}
+
+\item{...}{Additional arguments. See details.}
 }
 \description{
 A timeseries leaflet map that displays point location timeseries data and
 allows playback.
+}
+\details{
+\itemize{
+\item \code{data} must be a data.frame of hourly-resolution point location data.
+The data \emph{must} contain one 'datetime' column and \emph{at least} one column that can
+be column indexed with parameter \code{index} via \code{data$index}.
+\item \code{meta} must be a data.frame that contains information corresponding to
+\code{data} point location timeseries data. The \code{meta} data.frame \emph{must}
+contain \emph{at least} a \code{label} column and an \code{index} columns.
+\item \code{...} Additional configuration arguments: width, height, elementId, colors, breaks, inputId.
+Documentation WIP.
+}
 }

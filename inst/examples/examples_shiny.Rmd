@@ -41,9 +41,12 @@ updateData <- function() {
 ```
 
 ```{r}
+breaks <- c(1,2,3,5,6,8,9,10,20,30,40,50)
+colors <- RColorBrewer::brewer.pal(11, "Spectral")
 renderTimeseriesMap({
-  timeseriesMap(sensors$data, sensors$meta, shinyInputId = "sensor")
+  timeseriesMap(sensors$data, sensors$meta, inputId = "sensor", breaks = breaks, colors = colors)
 })
+
 ```
 
 

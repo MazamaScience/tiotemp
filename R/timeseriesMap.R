@@ -3,8 +3,22 @@
 #' A timeseries leaflet map that displays point location timeseries data and
 #' allows playback.
 #'
-#' @param data
-#' @param meta
+#' @param data A data.frame that contains the hourly-resolution point location
+#' timeseries data. See Details.
+#' @param meta A data.frame that contains the point location metadata. See Details.
+#' @param index A string to index point location metadata and temporal data by.
+#' @param label A string to index point location metadata label by.
+#' @param ... Additional arguments. See details.
+#'
+#' @details
+#' - \code{data} must be a data.frame of hourly-resolution point location data.
+#' The data _must_ contain one 'datetime' column and _at least_ one column that can
+#' be column indexed with parameter \code{index} via \code{data$index}.
+#' - \code{meta} must be a data.frame that contains information corresponding to
+#' \code{data} point location timeseries data. The \code{meta} data.frame _must_
+#' contain _at least_ a \code{label} column and an \code{index} columns.
+#' - \code{...} Additional configuration arguments: width, height, elementId, colors, breaks, inputId.
+#' Documentation WIP.
 #'
 #' @import htmlwidgets
 #'
@@ -12,66 +26,65 @@
 timeseriesMap <- function(
   data,
   meta,
-  options = list(
-    index = "monitorID",
-    label = "label",
-    breaks = c(12, 35, 55, 75, 100),
-    colors = c("#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a")
-  ),
-  shinyInputId = NULL
+  index = "monitorID",
+  label = "label",
+  ...
   ) {
 
-  width = options$width
-  height = options$height
-  shared = options$shared
-  elementId = options$elementId
-  index = options$index
-  label = options$label
-  breaks = options$breaks
-  colors = options$colors
-
-  if (crosstalk::is.SharedData(shared)) {
-    # Using Crosstalk
-    key <- shared$key()
-    group <- shared$groupName()
-    shared <- shared$origData()
-  } else {
-    # Not using Crosstalk
-    key <- NULL
-    group <- NULL
+  # Checks
+  if ( is.null(index) ) {
+    stop("parameter 'index' is required.")
+  }
+  if ( is.null(label) ) {
+    stop("parameter 'label' is required.")
   }
 
-  # forward options using x
-  x = list(
+  # Store extra args
+  args <- list( ... )
+
+  # Set default colors
+  if ( !"colors" %in% names(args) ) {
+    args$colors <- c("#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a")
+  }
+  if ( !"breaks" %in% names(args) ) {
+    args$breaks <- c(12, 35, 55, 75, 100)
+  }
+
+  # Aval config arguments
+  config = list(
+    width = args$width, # width
+    height = args$height, # height
+    elementId = args$elementId, # html element ID
+    breaks = args$breaks, # color ramp breaks
+    colors = args$colors, # colors
+    inputId = args$inputId # Shiny input id
+  )
+
+  # Create data list
+  dataList <- list(
     data = data,
     meta = meta,
     index = index,
-    label = label,
-    breaks = breaks,
-    colors = colors,
-    shared = shared,
-    inputId = shinyInputId,
-    settings = list(
-      crosstalk_key = key,
-      crosstalk_group = group
-    )
+    label = label
   )
+
+  # Create data object for forwarding
+  x <- append(dataList, config)
 
   # create widget
   htmlwidgets::createWidget(
     name = 'timeseriesMap',
-    x,
-    width = width,
-    height = height,
+    x = x,
+    width = config$width,
+    height = config$height,
     package = 'tiotemp',
-    elementId = elementId,
+    elementId = args$elementId,
     sizingPolicy = htmlwidgets::sizingPolicy(
       defaultWidth = 800,
       defaultHeight = 500,
       viewer.padding = 0,
       browser.fill = TRUE
-    ),
-    dependencies = crosstalk::crosstalkLibs()
+    )
   )
 
 }
