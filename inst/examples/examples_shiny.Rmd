@@ -43,7 +43,7 @@ wellPanel(
 breaks <- c(1,2,3,5,6,8,9,10,20,30,40,50)
 colors <- RColorBrewer::brewer.pal(11, "Spectral")
 output$map1 <- renderTimeseriesMap({
-  #timeseriesMap(sensors$data, sensors$meta, inputId = "sensor", breaks = breaks, colors = colors)
+  timeseriesMap(sensors$data, sensors$meta, inputId = "sensor", breaks = breaks, colors = colors, elementId = "ONE")
 })
 ```
 
@@ -52,7 +52,7 @@ output$map1 <- renderTimeseriesMap({
 breaks2 <- c(1,2,3,5,6,8,9,10,20,30,40,50)
 colors2 <- RColorBrewer::brewer.pal(11, "Paired")
 output$map2 <- renderTimeseriesMap({
-  timeseriesMap(monitors$data, monitors$meta, breaks = breaks2, colors = colors2)
+  timeseriesMap(monitors$data, monitors$meta, breaks = breaks2, colors = colors2, elementId = "TWO")
 })
 # map2
 ```

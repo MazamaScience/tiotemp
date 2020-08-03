@@ -32,7 +32,6 @@ HTMLWidgets.widget({
         maxZoom: 18,
       }).addTo(map)
 
-
     return {
       renderValue: function (x) {
 
@@ -97,7 +96,7 @@ HTMLWidgets.widget({
         // hightlight selected point
         let selectPoint = function(d) {
           restorePoints();
-          d3.selectAll(`[point-label=${d}]`)
+          d3.select("#" + el.id).selectAll(`[point-label=${d}]`)
             .raise()
             .transition()
             .duration(200)
@@ -116,7 +115,7 @@ HTMLWidgets.widget({
 
         // Update the points position on map move
         function updatePointLocation() {
-          d3.selectAll(".point")
+          d3.select("#" + el.id).selectAll(".point")
             .attr("cx", d => { return map.latLngToLayerPoint(d.LatLng).x })
             .attr("cy", d => { return map.latLngToLayerPoint(d.LatLng).y })
         };
@@ -126,7 +125,7 @@ HTMLWidgets.widget({
           let roundedDate = new Date(d3.utcFormat("%Y-%m-%dT%H:00:00.%LZ")(x))
           let i = dateScale(roundedDate);
           let dateIndex = (i < 0 ? 0 : i) | 0;
-          d3.selectAll(".point")
+          d3.select("#" + el.id).selectAll(".point")
             .transition()
             .duration(100)
             .style("fill", (d, i) => { return d.data[dateIndex].color })
@@ -134,7 +133,7 @@ HTMLWidgets.widget({
 
         // restore all the colors after selection
         function restorePoints() {
-          d3.selectAll(".point")
+          d3.select("#" + el.id).selectAll(".point")
             .transition()
             .duration(200)
             .style("stroke", "white")
@@ -176,18 +175,18 @@ HTMLWidgets.widget({
         };
 
         // draw the points on the map svg
-        let drawPoints = function(pointData) {
+        let drawPoints = async function(pointData) {
 
-          d3.selectAll(".point").remove();
+          d3.select("#" + el.id).selectAll(".point").remove();
 
           // create the canvas
-          let pointCanvas = d3.select("#" + el.id)
+          let pointCanvas = await d3.select("#" + el.id)
             .select(".leaflet-pane")
             .select("svg")
             .append("g");
 
           // Add points
-          let points = pointCanvas.selectAll(".point")
+          let points = await pointCanvas.selectAll(".point")
             .data(pointData)
             .enter()
               .append("circle")
@@ -217,8 +216,8 @@ HTMLWidgets.widget({
 
         // Update the slider handle position
         function updateHandle(x) {
-          d3.selectAll(".handle").style("cx", xScale(x) + "px")
-          d3.selectAll(".slider-label")
+          d3.select("#" + el.id).selectAll(".handle").style("cx", xScale(x) + "px")
+          d3.select("#" + el.id).selectAll(".slider-label")
             .attr("x", xScale(x))
             .text(formatDateIntoHr(x))
         };
@@ -242,7 +241,7 @@ HTMLWidgets.widget({
         };
 
         function mouseOverButton() {
-          d3.selectAll(".svg-inline--fa")
+          d3.select("#" + el.id).selectAll(".svg-inline--fa")
             .transition()
             .duration(250)
             .style("opacity", 0.75)
@@ -250,7 +249,7 @@ HTMLWidgets.widget({
           };
 
         function mouseOutButton() {
-          d3.selectAll(".svg-inline--fa")
+          d3.select("#" + el.id).selectAll(".svg-inline--fa")
             .transition()
             .duration(250)
             .style("opacity", 1)
@@ -259,8 +258,8 @@ HTMLWidgets.widget({
         let drawPlayback = function() {
 
           // remove old slider/playbutton hack
-          d3.selectAll(".slider").remove();
-          d3.selectAll(".playback-button").remove();
+          d3.select("#" + el.id).selectAll(".slider").remove();
+          d3.select("#" + el.id).selectAll(".playback-button").remove();
 
           let playbackWidth = width,
               playbackHeight = height*0.18;
@@ -363,7 +362,7 @@ HTMLWidgets.widget({
 
         // watch for click
           playButton.on("click", () => {
-            let button = d3.selectAll(".playback-button").selectAll(".svg-inline--fa")
+            let button = d3.select("#" + el.id).selectAll(".playback-button").selectAll(".svg-inline--fa")
             if (playing) {
               playing = false;
               clearInterval(timer);
