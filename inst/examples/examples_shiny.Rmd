@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tiotemp)
 library(AirSensor)
+library(PWFSLSmoke)
 library(shiny)
 ```
 
@@ -20,6 +21,7 @@ library(shiny)
 setArchiveBaseUrl("http://data.mazamascience.com/PurpleAir/v1") # SCAQMD sensors
 sensors <- sensor_load()
 labels <- sensors$meta$label
+monitors <- monitor_load(startdate = 20200101, enddate = 20200201)
 ```
 
 
@@ -29,27 +31,31 @@ inputPanel(
               choices = labels),
   dateRangeInput("dates", label = "Select Date Domain")
 )
-```
-
-```{r}
-updateData <- function() {
-  dates <- strftime(input$dates, "%Y%m%d")
-  sensor <- sensors %>% 
-    sensor_filterMeta(.data$label == input$sensor) %>% 
-    sensor_filterDate(startdate = dates[1], enddate = dates[2])
-}
+wellPanel(
+  timeseriesMapOutput("map1")
+)
+wellPanel(
+  timeseriesMapOutput("map2")
+)
 ```
 
 ```{r}
 breaks <- c(1,2,3,5,6,8,9,10,20,30,40,50)
 colors <- RColorBrewer::brewer.pal(11, "Spectral")
-renderTimeseriesMap({
-  timeseriesMap(sensors$data, sensors$meta, inputId = "sensor", breaks = breaks, colors = colors)
+output$map1 <- renderTimeseriesMap({
+  #timeseriesMap(sensors$data, sensors$meta, inputId = "sensor", breaks = breaks, colors = colors)
 })
-
 ```
 
 
+```{r}
+breaks2 <- c(1,2,3,5,6,8,9,10,20,30,40,50)
+colors2 <- RColorBrewer::brewer.pal(11, "Paired")
+output$map2 <- renderTimeseriesMap({
+  timeseriesMap(monitors$data, monitors$meta, breaks = breaks2, colors = colors2)
+})
+# map2
+```
 
 
 

@@ -20,6 +20,9 @@
 #' - \code{...} Additional configuration arguments: width, height, elementId, colors, breaks, inputId.
 #' Documentation WIP.
 #'
+#' @examples
+#'
+#'
 #' @import htmlwidgets
 #'
 #' @export
