@@ -13,153 +13,169 @@ HTMLWidgets.widget({
       right: 10
     };
 
-    // color ramp map
-    let col = d3.scaleThreshold()
-      .domain([12, 35, 55, 75, 100])
-      // SCAQMD profile
-      .range(["#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a"]);
+    /*
+    Helpers
+    */
 
-    // TODO: define shared variables for this instance
+    let formatDateIntoDay = d3.timeFormat("%b %d");
+    let formatDateIntoHr = d3.timeFormat("%b %d %H:00");
+    let strictIsoParse = d3.utcParse("%Y-%m-%dT%H:%M:%SZ");
+    let roundUtcDate = d3.utcFormat("%Y-%m-%dT%H:00:00Z");
+    let formatValue = d3.format(".1f");
 
-    d3.selectAll("svg").remove()
-
-    let svgPlot = d3.select(el).append("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("preserveAspectRatio", "xMinYMin meet")
-      .attr("viewBox", `0 0 ${width} ${height}`)
-      .attr("style", "background-color:white")
-      .classed("svg-content", true);
-
-
-    let ct_sel = new crosstalk.SelectionHandle();
+    let average = (array) => array.reduce((a, b) => a + b) / array.length;
 
     return {
 
       renderValue: function (x) {
 
-        let date;
-        let val;
-        let data;
-        let meta;
-        let focusData;
+        // Create color ramp profile using options
+        let colorMap = d3.scaleThreshold()
+          .domain(x.breaks)
+          .range(x.colors);
 
-        meta = HTMLWidgets.dataframeToD3(x.meta);
-        data = HTMLWidgets.dataframeToD3(x.data);
+        // Load the data
+        const meta = HTMLWidgets.dataframeToD3(x.meta);
+        const data = HTMLWidgets.dataframeToD3(x.data);
 
-        sensorIDs = meta.map(d => {
-          return d.monitorID
-        })
+        // Index IDs using passed in index str
+        let indexIds = meta.map(d => { return d[x.index] });
 
+        let xScale; // init function for scaling function
+        let yScale;
 
+        let canvas = d3.select("#"+el.id)
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("preserveAspectRatio", "xMinYMin meet")
+            .attr("viewBox", `0 0 ${width} ${height}`)
+            .attr("style", "background-color:white")
+            .classed("svg-content", true);
 
-
-        let formatVal = d3.format(".1f");
-
-        focusData = sensorIDs.map(id => {
+        // create bar data
+        let barData = indexIds.map(id => {
           return {
             id: id,
+            label: meta.filter(d => { return d[x.index] == id })[0][x.label],
+            community: meta.filter(d => { return d[x.index] == id })[0].community,
             data: data.map(d => {
               return {
-                date: d.datetime,
-                value: formatVal(+d[id]),
-                color: col(+d[id])
+                date: new Date(d.datetime),
+                value: formatValue(+d[id]),
+                color: colorMap(+d[id])
               }
             })
           }
-        })
+        });
 
-        let yMax = 50; //d3.max(selectedData.data, d => { return d.value });
-        let xDomain = data.map(d => {
-          return d.datetime
-        }) //selectedData.data.map(d => { return d.date });
+        let selectedData = barData[0];
 
-        let xScale = d3.scaleBand()
-          .domain(xDomain)
-          .range([margin.left, width - margin.right - margin.left])
-          .padding(0.5);
-        let yScale = d3.scaleLinear()
-          .domain([0, yMax])
-          .range([height - margin.bottom, margin.top]);
+        let drawAxis = function(data) {
 
+          d3.select("#" + el.id).selectAll(".axis").remove();
 
-        let xAxis = d3.axisBottom(xScale)
-          .tickSizeOuter(0)
-          .tickValues(xScale.domain().filter((d, i) => {
-            return !(i % 24)
-          })
-          );
+          let dateDomain = data.map(d => { return d.datetime });
+          let sd = dateDomain.slice(1)[0],
+              ed = dateDomain.slice(-1)[0];
 
-        let yAxis = d3.axisLeft(yScale)
-          .tickSizeOuter(0);
+          xScale = d3.scaleBand()
+            .domain(dateDomain)
+            .range([margin.left, width - margin.right - margin.left])
+            .padding(0.5);
+          yScale = d3.scaleLinear()
+            .domain([0, 50]) // Set 50 to be constant y lim
+            .range([height - margin.bottom, margin.top]);
 
-        svgPlot.append("g")
-          .attr("class", "x-axis")
-          .attr("transform", `translate(0,${ height - margin.bottom })`)
-          .call(xAxis);
+          // Create x axis
+          let xAxis = d3.axisBottom(xScale)
+            .tickSizeOuter(0)
+            // tick every 24 hours
+            .tickValues(xScale.domain().filter((d, i) => { return !(i % 24) }));
 
-        svgPlot.append("g")
-          .attr("class", "y-axis")
-          .attr("transform", `translate(${ margin.left },0)`)
-          .call(yAxis);
-        // y axis label
-        svgPlot.append("text")
-          .attr("transform", "rotate(-90)")
-          .attr("y", 0)
-          .attr("x", 0 - (height / 2))
-          .attr("dy", "0.8em")
-          .style("text-anchor", "middle")
-          .text(x.ylab);
-        // title, subtitle
-        let title = svgPlot.append("text")
-          .attr("x", (width / 2))
-          .attr("y", (margin.top / 2))
-          .attr("text-anchor", "middle")
-          .style("font-size", "1em")
-        //.style("text-decoration", "underline");
+          let yAxis = d3.axisLeft(yScale)
+            .tickSizeOuter(0);
 
-        let subtitle = svgPlot.append("text")
-          .attr("x", (width / 2))
-          .attr("y", (margin.top / 2 + 16))
-          .attr("text-anchor", "middle")
-          .style("font-size", "0.5em")
-        //.style("text-decoration", "underline");
+          // Create axis canvas
+          let axisCanvas = d3.select("#"+el.id)
+            .select("svg")
+            .append("g")
+            .attr("class", "axis");
 
+          // Add x axis
+          axisCanvas
+            .append("g")
+            .attr("class", "x-axis")
+            .attr("transform", `translate(0,${ height - margin.bottom })`)
+            .call(xAxis);
 
-        if (meta.length > 1) {
-          let dropdown = d3.select(el).insert("select", ":first-child")
-            .attr("display", "block")
+          // Add y axis
+          axisCanvas
+            .append("g")
+            .attr("class", "y-axis")
+            .attr("transform", `translate(${ margin.left },0)`)
+            .call(yAxis);
 
-          dropdown.selectAll("option")
-            .data(sensorIDs)
+          // Create axis labels
+          axisCanvas.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 0)
+            .attr("x", 0 - (height / 2))
+            .attr("dy", "0.8em")
+            .style("text-anchor", "middle")
+            .text(x.ylab);
+
+          axisCanvas.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 0)
+            .attr("x", 0 - (height / 2))
+            .attr("dy", "0.8em")
+            .style("text-anchor", "middle")
+            .text(x.xlab);
+        };
+
+        let drawBars = function(barData) {
+
+          d3.select("#" + el.id).selectAll(".bar").remove();
+
+          function barMouseOver(d) {
+            date = d.date;
+            val = d.value;
+            d3.select(d3.event.target)
+              .style("stroke", "red")
+          }
+
+          function barMouseOut(d) {
+            d3.select(d3.event.target)
+              .transition()
+              .duration(150)
+              .style("stroke", "transparent");
+          }
+
+          function barMouseMove(d) {
+            //console.log(d)
+  /*          tooltip
+              .transition()
+              .duration(10)
+              .style("top", (yScale(d.value) - 10 + "px"))
+              .style("left", (xScale(d.date) + 8 + "px"));*/
+          }
+
+          let barCanvas = d3.select("#"+el.id)
+            .select("svg")
+            .append("g")
+            .attr("class", "bars");
+
+          barCanvas
+            .selectAll(".bar")
+            .data(barData.data)
             .enter()
-            .append("option")
-            .attr("value", d => {
-              return d
-            })
-            .text(d => {
-              return d
-            });
-          dropdown.on("change", dropdownChange);
-
-        }
-
-        let tooltip = d3.select("body")
-          .append("div")
-          .style("position", "absolute")
-          .style("z-index", "10")
-          .style("visibility", "hidden")
-
-        let updateBars = function (d) {
-
-          let bars = svgPlot.selectAll(".bar")
-            .data(d.data);
-
-          bars.enter()
             .append("rect")
             .attr("class", "bar")
+            //.transition()
+            //.duration(150)
             .attr("x", d => {
-              return xScale(d.date)
+              return xScale(roundUtcDate(d.date))
             })
             .attr("y", d => {
               return yScale(d.value)
@@ -174,94 +190,43 @@ HTMLWidgets.widget({
             .style("fill", d => {
               return d.color
             })
-            .on("mouseover", mouseIn)
-            .on("mouseout", mouseOut)
-            .on("mousemove", mouseMove);
+            .on("mousemove", barMouseMove)
+            .on("mouseout", barMouseOut)
+            .on("mouseover", barMouseOver);
 
-          // Update old ones, already have x / width from before
-          bars.transition()
-            .duration(300)
-            .attr("y", (d, i) => {
-              return yScale(d.value);
-            })
-            .attr("height", (d, i) => {
-              return yScale(0) - yScale(d.value);
-            })
-            .style("fill", d => {
-              return d.color
-            });
-
-            //axis update
-            d3.selectAll(".x-axis").transition().duration(100).call(xAxis)
-
-          if (x.title != null) {
-            title.text(x.title);
-          }
-
-          if (x.subtitle != null) {
-            subtitle.text(x.subtitle);
-          }
-
-          // Remove old ones
-          bars.exit().remove();
-          svgPlot.exit().remove();
-
-          };
-
-        function mouseIn(d) {
-          date = d.date;
-          val = d.value;
-          d3.select(d3.event.target)
-            .style("stroke", "red")
-          tooltip
-            .transition()
-            .duration(150)
-            .style("visibility", "visible").text(val)
-        };
-
-        function mouseOut(d) {
-          d3.select(d3.event.target)
-            .transition()
-            .duration(150)
-            .style("stroke", "transparent");
-          tooltip
-            .transition()
-            .duration(150)
-            .style("visibility", "hidden");
-        };
-
-        function mouseMove(d) {
-          tooltip
-            .transition()
-            .duration(10)
-            .style("top", (yScale(d.value) - 10 + "px"))
-            .style("left", (xScale(d.date) + 8 + "px"));
-        };
-
-        function dropdownChange() {
-          let selectedID = d3.select(this).property('value')
-          selectedData = focusData.filter(d => {
-            return d.id == selectedID
-          })[0]
-          updateBars(selectedData)
         };
 
 
 
-        let initData = focusData[0]
-        updateBars(initData)
+        // Allow shiny updating
+        if(x.inputId != null) {
+          let selectedLabel;
+          $("#" + x.inputId).on("change", function() {
+            selectedLabel = this.value;
+            selectedData = barData.filter(d => {
+              return d.label == selectedLabel
+            })[0]
+            update(data, selectedData);
+          });
+        };
+
+        function update(data, selectedData) {
+          drawAxis(data);
+          drawBars(selectedData);
+        };
+
+        update(data, selectedData)
+
 
       },
 
       resize: function (width, height) {
-
-        // TODO: code to re-render the widget with a new size
-        svgPlot.attr("width", width)
+        canvas
+          .attr("width", width)
           .attr("height", height);
-        //width(width).height(height)(false);
-
       }
 
     };
   }
+
 });
