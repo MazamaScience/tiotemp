@@ -34,3 +34,7 @@ contain \emph{at least} a \code{label} column and an \code{index} columns.
 Documentation WIP.
 }
 }
+\examples{
+
+
+}

@@ -37,6 +37,9 @@ wellPanel(
 wellPanel(
   timeseriesMapOutput("map2")
 )
+wellPanel(
+  timeseriesBarChartOutput("barchart1")
+)
 ```
 
 ```{r}
@@ -58,4 +61,13 @@ output$map2 <- renderTimeseriesMap({
 ```
 
 
+
+```{r}
+breaks3 <- c(1,2,3,5,6,8,9,10,20,30,40,50)
+colors3 <- RColorBrewer::brewer.pal(11, "Spectral")
+output$barchart1 <- renderTimeseriesBarChart({
+  timeseriesBarChart(sensors$data, sensors$meta, inputId = 'sensor', colors = colors3, breaks = breaks3)
+})
+
+```
 
