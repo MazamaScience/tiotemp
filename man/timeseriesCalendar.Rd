@@ -4,7 +4,7 @@
 \alias{timeseriesCalendar}
 \title{<Add Title>}
 \usage{
-timeseriesCalendar(data, meta, width = NULL, height = NULL, elementId = NULL)
+timeseriesCalendar(data, meta, index = "monitorID", label = "label", ...)
 }
 \description{
 <Add Description>

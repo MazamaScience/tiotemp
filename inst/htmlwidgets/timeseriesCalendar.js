@@ -6,6 +6,20 @@ HTMLWidgets.widget({
 
   factory: function (el, width, height) {
 
+    let margin = {
+        top: 25,
+        bottom: 25,
+        left: 25,
+        right: 25
+    };
+
+    let cellMargin = 2,
+        cellSize = 30;
+
+    /*
+    Helpers
+    */
+
     // Calulate the number of rows per month
     let monthRows = function (month) {
       let m = d3.timeMonth.floor(month);
@@ -13,11 +27,6 @@ HTMLWidgets.widget({
         d3.timeMonth.offset(m, 1)).length;
     };
 
-    // aes
-    let cellMargin = 2,
-      cellSize = 30;
-
-    // helpers
     let dayFormat = d3.timeFormat("%w"),
       weekFormat = d3.timeFormat("%U"),
       format = d3.timeFormat("%Y-%m-%d"),
@@ -25,90 +34,76 @@ HTMLWidgets.widget({
       monthFormat = d3.timeFormat("%B"),
       yearFormat = d3.timeFormat("%Y");
 
-    // Create canvas
-    let canvas = d3.select(el)
-      .selectAll("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("preserveAspectRatio", "xMinYMin meet")
-      .attr("viewBox", `0 0 ${width} ${height}`)
-      .attr("style", "background-color:white")
-      .classed("svg-content", true);
-    // Create tooltip
-    let tooltip = d3.select("body")
-      .append("div")
-      .style("opacity", 0)
-      .attr("class", "tooltip")
-      .style("background-color", "white")
-      .style("border", "solid")
-      .style("border-width", "2px")
-      .style("border-radius", "5px")
-      .style("padding", "5px")
-      .style("position", "absolute")
-      .style("z-index", "10")
 
-    // Create color ramp profile
-    let colorMap = d3.scaleThreshold()
-      .domain([12, 35, 55, 75, 100])
-      // SCAQMD profile
-      .range(["#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a"]);
+    let average = (array) => array.reduce((a, b) => a + b) / array.length;
 
     return {
 
       renderValue: function (x) {
 
-        // Access data
-        let meta;
-        let data;
-        let dailyData;
-        let sensorIDs;
+        // Create color ramp profile using options
+        let colorMap = d3.scaleThreshold()
+          .domain(x.breaks)
+          .range(x.colors);
 
-        data = HTMLWidgets.dataframeToD3(x.data);
-        meta = HTMLWidgets.dataframeToD3(x.meta);
+        // Load the data
+        const meta = HTMLWidgets.dataframeToD3(x.meta);
+        const data = HTMLWidgets.dataframeToD3(x.data);
 
-        // Sensor IDs
-        sensorIDs = meta.map(d => {
-          return d.monitorID
-        });
+        // Index IDs using passed in index str
+        let indexIds = meta.map(d => { return d[x.index] });
 
-        dailyData = sensorIDs.map(id => {
+        // Create canvas
+        let canvas = d3.select('#' + el.id)
+          .selectAll("svg")
+          .attr("width", width)
+          .attr("height", height)
+          .attr("preserveAspectRatio", "xMinYMin meet")
+          .attr("viewBox", `0 0 ${width} ${height}`)
+          .attr("style", "background-color:white")
+          .classed("svg-content", true);
+
+        let dailyData = indexIds.map(id => {
           return {
             id: id,
+            label: meta.filter(d => { return d[x.index] == id })[0][x.label],
+            community: meta.filter(d => { return d[x.index] == id })[0].community,
             data: data.map(d => {
               return {
                 date: format(new Date(d.datetime)),
-                value: d3.format(".1f")(+d[id]),
+                value: +d[id],
                 color: colorMap(+d[id])
               }
             })
           }
         });
 
-        // DEV
-        let dd = dailyData[0];
+        let dateDomain = data.map(d => { return d.datetime });
+        let sd = new Date(dateDomain.slice(1)[0]),
+            ed = new Date(dateDomain.slice(-1)[0]);
 
-        // create start and enddates
-        let sd = d3.min(data, d => {
-          return new Date(d.datetime)
-        });
-        let ed = d3.max(data, d => {
-          return new Date(d.datetime)
-        });
+        let selectedData = dailyData[15];
 
-        // calc the months in date domain
+        let drawCalendar = function(dailyData) {
+
+        d3.select("#" + el.id).selectAll(".month").remove();
+
+                // calc the months in date domain
         months = d3.timeMonth.range(d3.timeMonth.floor(sd), ed);
 
         // Add month svgs
-        let month = canvas.data(months)
+        let month = canvas
+          .data(months)
           .enter()
           .append("svg")
-          .attr("class", "month")
-          .attr("width", (cellSize * 7) + (cellMargin * 8) + 10)
-          .attr("height", d => {
-            let r = 8; //monthRows(d);
-            return (cellSize * r) + (cellMargin * (r + 1));
-          })
-          .append("g")
+            .attr("class", "month")
+            .attr("width", (cellSize * 7) + (cellMargin * 8) + 10)
+            .attr("height", d => {
+              let r = 8; //monthRows(d);
+              return (cellSize * r) + (cellMargin * (r + 1));
+            })
+            .append("g");
+
         // add month labels
         let monthLabels = month.append("text")
           .attr("class", "month-label")
@@ -123,17 +118,16 @@ HTMLWidgets.widget({
           .data((d, i) => {
             return d3.timeDays(d, new Date(d.getFullYear(), d.getMonth() + 1, 1));
           })
-          .enter().append("rect")
+          .enter()
+          .append("rect")
             .attr("class", "day")
             .attr("width", cellSize)
             .attr("height", cellSize)
             .attr("rx", 3).attr("ry", 3) // round corners
             .attr("fill", (d, i) => {
-              let colData = dd.data.filter(h => {
-                return h.date == format(d)
-              })[0];
-              if (typeof colData !== 'undefined') {
-                return colData.color
+              let col = selectedData.data.filter(h => { return h.date == format(d) })[0];
+              if (typeof col !== 'undefined') {
+                return col.color
               } else {
                 return "#eaeaea"
               }
@@ -164,61 +158,29 @@ HTMLWidgets.widget({
             .style("fill", "white")
             .style("font", "10px sans-serif")
             .style("text-anchor", "end")
-            .text(d =>{ return "HI"; });;
+            .text(d =>{ return "HI"; });
 
-        let focus,
-          focusValue,
-          focusDate;
 
-        // Add mouseover
-        function mouseOver(d) {
-          focus = dd.data.filter(h => {
-            return h.date == format(d)
-          })[0];
-          if (typeof focus !== 'undefined') {
-            focusDate = focus.date;
-            focusVal = focus.value;
-          } else {
-            focusDate = 0;
-            focusVal = "NA";
-          }
-          tooltip
-            .style("opacity", 1)
-          d3.select(this)
-            .transition()
-            .duration(150)
-            .style("stroke", "red")
-            .style("opacity", 1)
         };
-        // mouseout
-        function mouseOut(d) {
-          tooltip
-            .style("opacity", 0)
-          d3.select(this)
-            .transition()
-            .duration(150)
-            .style("stroke", "none")
-            .style("opacity", 1)
+
+        // Allow shiny updating
+        if(x.inputId != null) {
+          let selectedLabel;
+          $("#" + x.inputId).on("change", function() {
+            selectedLabel = this.value;
+            selectedData = dailyData.filter(d => {
+              return d.label == selectedLabel
+            })[0]
+            drawCalendar(selectedData);
+          });
         };
-        // mouse tooltip move
-        let mouseMove = function (d) {
-          tooltip
-            .html(focusDate + "<br> Value: " + focusVal)
-            .style("left", (d3.mouse(this)[0]) + "px")
-            .style("top", (d3.mouse(this)[1]) + "px")
-        }
 
-        // hover watcher
-        day.on("mouseover", mouseOver)
-           .on("mouseout", mouseOut)
-           .on("mousemove", mouseMove)
-
+        drawCalendar(selectedData);
 
       },
 
       resize: function (width, height) {
 
-        // TODO: code to re-render the widget with a new size
 
       }
 
