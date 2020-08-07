@@ -86,17 +86,17 @@ HTMLWidgets.widget({
 
         let drawCalendar = function(dailyData) {
 
-        d3.select("#" + el.id).selectAll(".month").remove();
+        d3.select("#" + el.id).selectAll(".month-cell").remove();
 
                 // calc the months in date domain
         months = d3.timeMonth.range(d3.timeMonth.floor(sd), ed);
 
         // Add month svgs
-        let month = canvas
+        let monthCell = canvas
           .data(months)
           .enter()
           .append("svg")
-            .attr("class", "month")
+            .attr("class", "month-cell") // HMM
             .attr("width", (cellSize * 7) + (cellMargin * 8) + 10)
             .attr("height", d => {
               let r = 8; //monthRows(d);
@@ -105,22 +105,50 @@ HTMLWidgets.widget({
             .append("g");
 
         // add month labels
-        let monthLabels = month.append("text")
+        monthCell.append("text")
           .attr("class", "month-label")
           .attr("x", ((cellSize * 7) + cellMargin * 8) / 2)
-          .attr("y", 15).attr("text-anchor", "middle")
+          .attr("y", 12)
+          .attr("text-anchor", "middle")
+          .attr("font-family", "sans-serif")
           .text(d => {
             return monthFormat(d)
           });
 
+          // Add date-text
+          monthCell.selectAll("rect.day")
+          .data((d, i) => {
+            return d3.timeDays(d, new Date(d.getFullYear(), d.getMonth() + 1, 1));
+          })
+          .enter()
+          .append("text")
+            .attr("class", "day-text")
+            .attr("text-anchor","middle")
+            .attr("font-family", "sans-serif")
+            .attr("font-size", "1em")
+            .style("stroke", "black")
+            .style("stroke-width", "0.02em")
+            .attr("width", cellSize)
+            .attr("height", cellSize)
+            .attr("x", d => {
+              let n = dayFormat(d);
+              return ( ( n * cellSize ) + ( n * cellMargin ) + cellSize/2 + cellMargin)
+            })
+            .attr("y", d => {
+              let firstDay = new Date(d.getFullYear(), d.getMonth(), 1)
+              let n = weekFormat(d) - weekFormat(firstDay)
+              return ( ( n * cellSize ) + ( n  * cellMargin )  +  cellSize + cellSize  - cellSize/4)
+            })
+            .text(d => { return d3.timeFormat("%e")(d) })
+
         // add day rects
-        let day = month.selectAll("rect.day")
+        let dayCell = monthCell.selectAll("rect.day")
           .data((d, i) => {
             return d3.timeDays(d, new Date(d.getFullYear(), d.getMonth() + 1, 1));
           })
           .enter()
           .append("rect")
-            .attr("class", "day")
+            .attr("class", "day-fill")
             .attr("width", cellSize)
             .attr("height", cellSize)
             .attr("rx", 3).attr("ry", 3) // round corners
@@ -132,6 +160,7 @@ HTMLWidgets.widget({
                 return "#eaeaea"
               }
             })
+            .style("opacity", 0.8)
             .attr("x", d => {
               return (dayFormat(d) * cellSize + (dayFormat(d) * cellMargin) + cellMargin);
             })
@@ -141,25 +170,51 @@ HTMLWidgets.widget({
                 ((weekFormat(d) - weekFormat(firstDay)) * cellMargin) + cellMargin + 30
             });
 
-        day
-        .data((d, i) => {
+
+
+          // Weekday text below title
+          let weekDayText = monthCell.selectAll("rect.day")
+          .data((d, i) => {
             return d3.timeDays(d, new Date(d.getFullYear(), d.getMonth() + 1, 1));
           })
-          .enter().append("text")
-            .attr("x", d => {
-              return (dayFormat(d) * cellSize + (dayFormat(d) * cellMargin) + cellMargin);
+          .enter()
+          .append("text")
+            .attr("class", "weekday-text")
+            .attr("text-anchor","middle")
+            .attr("font-family", "sans-serif")
+            .attr("font-size", "0.6em")
+            .attr("width", cellSize)
+            .attr("height", cellSize)
+            .attr("x", (d, i) => {
+              if ( i < 7 ) {
+                let n = dayFormat(d);
+                return ( ( n * cellSize ) + ( n * cellMargin ) + cellSize/2 + cellMargin)
+              }
             })
-            .attr("y", d => {
-              let firstDay = new Date(d.getFullYear(), d.getMonth(), 1)
-              return ((weekFormat(d) - weekFormat(firstDay)) * cellSize) +
-                ((weekFormat(d) - weekFormat(firstDay)) * cellMargin) + cellMargin + 30
+            .attr("y", 30 - cellMargin)
+            .text((d,i) => {
+              if ( i < 7 ) {
+                return d3.timeFormat("%a")(d)
+              }
             })
-            .attr("dy", ".35em")
-            .style("fill", "white")
-            .style("font", "10px sans-serif")
-            .style("text-anchor", "end")
-            .text(d =>{ return "HI"; });
 
+          // Add mouseover highlighting
+          function cellMouseOver(d) {
+            d3.select(d3.event.target)
+              .style("stroke", "red")
+          }
+
+          function cellMouseOut(d) {
+            d3.select(d3.event.target)
+              .transition()
+              .duration(150)
+              .style("stroke", "transparent");
+          }
+
+
+          dayCell
+            .on("mouseover", cellMouseOver)
+            .on("mouseout", cellMouseOut)
 
         };
 
