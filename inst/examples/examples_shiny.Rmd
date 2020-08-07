@@ -8,28 +8,24 @@ runtime: shiny
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r}
 library(tiotemp)
 library(AirSensor)
 library(PWFSLSmoke)
 library(shiny)
-```
-
-```{r}
 setArchiveBaseUrl("http://data.mazamascience.com/PurpleAir/v1") # SCAQMD sensors
-sensors <- sensor_load()
+sensors <- sensor_loadMonth(datestamp = 202003)
 labels <- sensors$meta$label
 monitors <- monitor_load(startdate = 20200101, enddate = 20200201)
+breaks <- c(5, 10, 15, 20, 25, 30, 35, 40, 45, 50)
+colors <- RColorBrewer::brewer.pal(10, "Spectral")
 ```
 
 
-```{r, echo=FALSE}
+```{r interface, echo=FALSE}
 inputPanel(
   selectInput("sensor", label = "Select Sensor",
-              choices = labels),
-  dateRangeInput("dates", label = "Select Date Domain")
+              choices = labels)
+  #dateRangeInput("dates", label = "Select Date Domain")
 )
 wellPanel(
   timeseriesMapOutput("map1")
@@ -45,40 +41,32 @@ wellPanel(
 )
 ```
 
-```{r}
-breaks <- c(1,2,3,5,6,8,9,10,20,30,40,50)
-colors <- RColorBrewer::brewer.pal(11, "Spectral")
+```{r map1, include=FALSE}
 output$map1 <- renderTimeseriesMap({
-  timeseriesMap(sensors$data, sensors$meta, inputId = "sensor", breaks = breaks, colors = colors, elementId = "ONE")
+  timeseriesMap(sensors$data, sensors$meta, inputId = "sensor", breaks = breaks, colors = colors)
 })
 ```
 
 
-```{r}
-breaks2 <- c(1,2,3,5,6,8,9,10,20,30,40,50)
-colors2 <- RColorBrewer::brewer.pal(11, "Paired")
+```{r map2, include=FALSE}
 output$map2 <- renderTimeseriesMap({
-  timeseriesMap(monitors$data, monitors$meta, breaks = breaks2, colors = colors2, elementId = "TWO")
+  timeseriesMap(monitors$data, monitors$meta, breaks = breaks, colors = colors)
 })
 # map2
 ```
 
 
 
-```{r}
-breaks3 <- c(1,2,3,5,6,8,9,10,20,30,40,50)
-colors3 <- RColorBrewer::brewer.pal(11, "Spectral")
+```{r barchart, include=FALSE}
 output$barchart1 <- renderTimeseriesBarChart({
-  timeseriesBarChart(sensors$data, sensors$meta, inputId = 'sensor', colors = colors3, breaks = breaks3)
+  timeseriesBarChart(sensors$data, sensors$meta, inputId = 'sensor', colors = colors, breaks = breaks, ylab = "\u03bcg / m\u00b3")
 })
 
 ```
 
-```{r}
-breaks4 <- c(1,2,3,5,6,8,9,10,20,30,40,50)
-colors4 <- RColorBrewer::brewer.pal(11, "Spectral")
+```{r calendar, include=FALSE}
 output$calendar1 <- renderTimeseriesCalendar({
-  timeseriesCalendar(sensors$data, sensors$meta, inputId = 'sensor', colors = colors4, breaks = breaks4)
+  timeseriesCalendar(sensors$data, sensors$meta, inputId = 'sensor', colors = colors, breaks = breaks)
 })
 ```
 
