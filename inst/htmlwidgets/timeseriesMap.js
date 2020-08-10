@@ -73,7 +73,7 @@ HTMLWidgets.widget({
           .rangeRound([0, data.length])
           .clamp(true);
 
-        let playing = true;
+        let playing = false;
 
         // Create point location data object from each sensor label
         // contains leaflet latlng obj, hourly data, and mapped point color
@@ -106,6 +106,20 @@ HTMLWidgets.widget({
             .style("stroke", "#282b30");
         };
 
+        // Watch for playback
+        let play = function() {
+            let button = d3.select("#" + el.id).selectAll(".playback-button").selectAll(".svg-inline--fa")
+            if (playing) {
+              playing = false;
+              clearInterval(timer);
+              button.html('<i class="fas fa-play"></i>');
+            } else {
+              button.html('<i class="fas fa-pause"></i>');
+              playing = true;
+              timer = setInterval(step, 250);
+            }
+        };
+
         // Watch the input id to update map point selection from
         if ( x.inputId != null ) {
           $("#" + x.inputId).on("change", function() {
@@ -128,7 +142,12 @@ HTMLWidgets.widget({
           d3.select("#" + el.id).selectAll(".point")
             .transition()
             .duration(100)
-            .style("fill", (d, i) => { return d.data[dateIndex].color })
+            .style("fill", (d, i) => {
+              if ( typeof d.data[dateIndex] !== 'undefined' ) {
+                return d.data[dateIndex].color
+              }
+
+            })
           };
 
         // restore all the colors after selection
@@ -169,6 +188,7 @@ HTMLWidgets.widget({
 
           // If the shiny input id is provided, update the input
           if(x.inputId != null) {
+            console.log("Trying to update: ", x.inputId)
             Shiny.setInputValue(x.inputId, selectedMapSensor);
           }
 
@@ -202,6 +222,8 @@ HTMLWidgets.widget({
               .attr("fill-opacity", 0.75)
               .attr("stoke-opacity", 0.75)
               .attr("pointer-events", "visible");
+
+          //points.call(tip)
 
           // Watch points
           points
@@ -237,6 +259,7 @@ HTMLWidgets.widget({
             currentDate = sd
             clearInterval(timer)
             playing = false
+            play()
           }
         };
 
@@ -317,19 +340,29 @@ HTMLWidgets.widget({
                   timeUpdate(currentDate)
                 })
               );
-
+          // Get # of date ticks for slider based on date length
+          let nTicks;
+          if ( dateDomain.length/24 > 29 ) {
+            nTicks = 7;
+          } else if ( dateDomain.length/24 > 16 ) {
+            nTicks = 4;
+          } else {
+            nTicks = 1;
+          }
           // Add the slider track overlay
           let track = slider.insert("g", ".track-overlay")
             .attr("class", "ticks")
             .attr("transform", "translate(0," + 18 + ")")
             .selectAll("text")
-              .data(xScale.ticks())
+              .data(xScale.ticks(nTicks))
               .enter()
                 .append("text")
                 .attr("x", xScale)
                 .attr("y", 10)
                 .attr("text-anchor", "middle")
                 .text(function(d) { return formatDateIntoDay(d) });
+
+
 
         // Create slider handle
         let handle = slider.insert("circle", ".track-overlay")
@@ -361,20 +394,7 @@ HTMLWidgets.widget({
               .style("color", "#282b3")
 
         // watch for click
-          playButton.on("click", () => {
-            let button = d3.select("#" + el.id).selectAll(".playback-button").selectAll(".svg-inline--fa")
-            if (playing) {
-              playing = false;
-              clearInterval(timer);
-              button.html('<i class="fas fa-play"></i>');
-            } else {
-              playing = true;
-              timer = setInterval(step, 250);
-              button.html('<i class="fas fa-pause"></i>');
-            }
-          });
-
-          playButton
+          playButton.on("click", play)
             .on("mouseover", mouseOverButton)
             .on("mouseout", mouseOutButton)
 
