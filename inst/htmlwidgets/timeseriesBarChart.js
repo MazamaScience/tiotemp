@@ -75,23 +75,35 @@ HTMLWidgets.widget({
 
           d3.select("#" + el.id).selectAll(".axis").remove();
 
-          let dateDomain = data.map(d => { return d.datetime });
+          let dateDomain = data.map(d => { return d3.timeFormat("%m-%d-%Y %H:%M:%S")(new Date(d.datetime)) });
           let sd = dateDomain.slice(1)[0],
               ed = dateDomain.slice(-1)[0];
 
           xScale = d3.scaleBand()
             .domain(dateDomain)
             .range([margin.left, width - margin.right - margin.left])
-            .padding(0.5);
+            .padding(0.15);
           yScale = d3.scaleLinear()
             .domain([0, 50]) // Set 50 to be constant y lim
             .range([height - margin.bottom, margin.top]);
+
+          let ticks = xScale.domain().filter((d, i) => {
+              let n;
+              if ( dateDomain.length/24 > 29 ) {
+                n = 7;
+              } else if ( dateDomain.length/24 > 16  ) {
+                n = 4;
+              } else {
+                n = 1;
+              }
+              return !(i%(24*n))
+          });
 
           // Create x axis
           let xAxis = d3.axisBottom(xScale)
             .tickSizeOuter(0)
             // tick every 24 hours
-            .tickValues(xScale.domain().filter((d, i) => { return !(i % 24) }));
+            .tickValues(ticks);
 
           let yAxis = d3.axisLeft(yScale)
             .tickSizeOuter(0);
@@ -134,6 +146,18 @@ HTMLWidgets.widget({
             .text(x.xlab);
         };
 
+      // create a tooltip
+      let tooltip =   d3.select("#"+el.id)
+        .append("div")
+        .style("opacity", 0)
+        .attr("class", "tooltip")
+        .style("background-color", "transparent")
+        .style("padding", "5px")
+        .style("position", "relative")
+        .style("top", "-92%")
+        .style("left", "72%")
+        .style("width", "25%")
+
         let drawBars = function(barData) {
 
           d3.select("#" + el.id).selectAll(".bar").remove();
@@ -143,22 +167,38 @@ HTMLWidgets.widget({
             val = d.value;
             d3.select(d3.event.target)
               .style("stroke", "red")
+            tooltip
+              .transition()
+              .delay(75)
+              .style("opacity", 1)
           }
 
           function barMouseOut(d) {
             d3.select(d3.event.target)
               .transition()
               .duration(150)
-              .style("stroke", "transparent");
+              .style("stroke", "transparent")
+            tooltip
+              .transition()
+              .delay(100)
+              .style("opacity", 0)
           }
 
           function barMouseMove(d) {
-            //console.log(d)
-  /*          tooltip
-              .transition()
-              .duration(10)
-              .style("top", (yScale(d.value) - 10 + "px"))
-              .style("left", (xScale(d.date) + 8 + "px"));*/
+          tooltip
+            .html(`${d3.timeFormat("Date: %H:%M %b %d, %Y")(d.date)}<br>Value: ${d.value} ${x.ylab}`)
+            .style("font-size", "1em")
+            .style("font-family", "sans-serif")
+            .append("svg")
+            .style("position", "absolute")
+            .style("left", "-12%")
+            .style("top", "40%")
+            .append("rect")
+            .attr("class", "highlight-color")
+            .attr("width", "1.5em")
+            .attr("height", "0.5em")
+            .style("fill", d.color)
+            .style("rx", "0.2em");
           }
 
           let barCanvas = d3.select("#"+el.id)
@@ -166,16 +206,14 @@ HTMLWidgets.widget({
             .append("g")
             .attr("class", "bars");
 
-          barCanvas
+          let bars = barCanvas
             .selectAll(".bar")
             .data(barData.data)
             .enter()
             .append("rect")
             .attr("class", "bar")
-            //.transition()
-            //.duration(150)
             .attr("x", d => {
-              return xScale(roundUtcDate(d.date))
+              return xScale(d3.timeFormat("%m-%d-%Y %H:%M:%S")(d.date))
             })
             .attr("y", d => {
               return yScale(d.value)
@@ -190,13 +228,12 @@ HTMLWidgets.widget({
             .style("fill", d => {
               return d.color
             })
-            .on("mousemove", barMouseMove)
+
+        bars.on("mousemove", barMouseMove)
             .on("mouseout", barMouseOut)
-            .on("mouseover", barMouseOver);
+            .on("mouseover", barMouseOver)
 
         };
-
-
 
         // Allow shiny updating
         if(x.inputId != null) {
@@ -216,7 +253,6 @@ HTMLWidgets.widget({
         };
 
         update(data, selectedData)
-
 
       },
 
