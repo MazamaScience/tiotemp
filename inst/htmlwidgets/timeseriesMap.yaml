@@ -13,3 +13,7 @@ dependencies:
    src: htmlwidgets/lib/fontawesome
    script: all.js
    stylesheet: all.css
+ - name: d3-collection
+   version: 1.0.7
+   src: htmlwidgets/lib/d3-collection
+   script: d3-collection.v1.min.js

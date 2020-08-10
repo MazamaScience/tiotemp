@@ -82,7 +82,7 @@ HTMLWidgets.widget({
         let sd = new Date(dateDomain.slice(1)[0]),
             ed = new Date(dateDomain.slice(-1)[0]);
 
-        let selectedData = dailyData[15];
+        let selectedData = dailyData[0];
 
         let drawCalendar = function(dailyData) {
 
