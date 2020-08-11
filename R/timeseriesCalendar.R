@@ -8,7 +8,7 @@
 #' @examples
 #' library(AirSensor)
 #' sensor <- example_sensor
-#' timeseriesCalendar(meta = sensor$meta, data = sensor$data)
+#' timeseriesCalendar(data = sensor$data, meta = sensor$data)
 timeseriesCalendar <- function(
   data,
   meta,

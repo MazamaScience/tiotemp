@@ -127,6 +127,20 @@ HTMLWidgets.widget({
           });
         };
 
+                      // create a tooltip
+        let tooltip =   d3.select("#" + el.id)
+          .select(".leaflet-pane")
+          .append("svg")
+          .style("opacity", 0)
+          .attr("class", "tooltip")
+          .style("background-color", "#282b30")
+          .style("border", "solid")
+          .style("border-color", "#282b30")
+          .style("border-width", "2px")
+          .style("border-radius", "5px")
+          .style("padding", "5px")
+          .style("z-index", 666)
+
         // Update the points position on map move
         function updatePointLocation() {
           d3.select("#" + el.id).selectAll(".point")
@@ -161,19 +175,33 @@ HTMLWidgets.widget({
         };
 
         // Enlarge on mouseover
-        function mouseOverPoint() {
+        function mouseOverPoint(d) {
+          tooltip.selectAll("text").remove()
           d3.select(this)
             .transition()
             .duration(100)
             .attr("r", 10.5)
             .style("cursor", "pointer");
-            //.style("stroke", "#54575b")
-            //.style("stroke-opacity", 0.4)
-            //.delay(500);
+          tooltip
+            .style("width", d.label.length * 8 + "px")
+            .style("height", "2em")
+            .transition()
+            .duration(130)
+            .style("opacity", 0.75)
+            .style("left", `${d3.mouse(this)[0] - 35}px`)
+            .style("top", `${d3.mouse(this)[1] - 48}px`)
+          tooltip
+            .append("text")
+            .text(d.label)
+            .style("fill", "white")
+            .style("font-size", "1em")
+            .attr("x", "0em")
+            .attr("y", "1em")
         };
 
         // Return radius on mouseout
         function mouseOutPoint() {
+          tooltip.transition().duration(150).style("opacity", 0)
           d3.select(this)
             .transition()
             .duration(150)

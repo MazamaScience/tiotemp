@@ -84,6 +84,20 @@ HTMLWidgets.widget({
 
         let selectedData = dailyData[0];
 
+                              // create a tooltip
+        let tooltip = d3.select("#" + el.id)
+          .append("svg")
+          .style("opacity", 0)
+          .attr("class", "tooltip")
+          .style("background-color", "#282b30")
+          .style("border", "solid")
+          .style("border-color", "#282b30")
+          .style("border-width", "2px")
+          .style("border-radius", "5px")
+          .style("padding", "5px")
+          .style("position", "absolute")
+          .style("z-index", 666)
+
         let drawCalendar = function(dailyData) {
 
         d3.select("#" + el.id).selectAll(".month-cell").remove();
@@ -200,15 +214,40 @@ HTMLWidgets.widget({
 
           // Add mouseover highlighting
           function cellMouseOver(d) {
+            tooltip.selectAll("text").remove()
             d3.select(d3.event.target)
               .style("stroke", "red")
-          }
+            tooltip
+              .style("width", "75px")
+              .style("height", "2em")
+              .transition()
+              .duration(130)
+              .style("opacity", 0.75)
+              .style("left", `${d3.event.pageX}px`)
+              .style("top", `${d3.event.pageY}px`)
+            tooltip
+            .append("text")
+            .text(() => {
+              let s = selectedData.data.filter(h => { return h.date == format(d) })[0];
+              return `${s.value}`
+
+            })
+            .style("fill", "white")
+            .style("font-size", "1em")
+            .attr("x", "0em")
+            .attr("y", "1em")
+              }
 
           function cellMouseOut(d) {
             d3.select(d3.event.target)
               .transition()
               .duration(150)
               .style("stroke", "transparent");
+
+            tooltip
+              .transition()
+              .delay(100)
+              .style("opacity", 0)
           }
 
 
