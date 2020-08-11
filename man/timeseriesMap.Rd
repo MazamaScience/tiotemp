@@ -35,6 +35,9 @@ Documentation WIP.
 }
 }
 \examples{
-
+library(tiotemp)
+library(AirSensor)
+sensor <- example_sensor
+timeseriesMap(sensor$data, sensor$meta)
 
 }

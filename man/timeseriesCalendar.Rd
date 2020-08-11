@@ -2,15 +2,28 @@
 % Please edit documentation in R/timeseriesCalendar.R
 \name{timeseriesCalendar}
 \alias{timeseriesCalendar}
-\title{<Add Title>}
+\title{Timeseries Calendar Heatmap}
 \usage{
 timeseriesCalendar(data, meta, index = "monitorID", label = "label", ...)
 }
+\arguments{
+\item{data}{A data.frame that contains the hourly-resolution point location
+timeseries data. See Details.}
+
+\item{meta}{A data.frame that contains the point location metadata. See Details.}
+
+\item{index}{A string to index point location metadata and temporal data by.}
+
+\item{label}{A string to index point location metadata label by.}
+
+\item{...}{Additional arguments. See details.}
+}
 \description{
-<Add Description>
+
 }
 \examples{
+library(tiotemp)
 library(AirSensor)
 sensor <- example_sensor
-timeseriesCalendar(data = sensor$data, meta = sensor$data)
+timeseriesCalendar(data = sensor$data, meta = sensor$meta)
 }

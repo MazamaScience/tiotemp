@@ -1,14 +1,13 @@
 Package: tiotemp
-Title: A spatiotemporal visualization package.
-Version: 0.0.0.9000
+Title: Spatiotemporal Visualizations
+Version: 0.2.1
 Authors@R: 
     person(given = "Hans",
            family = "Martin",
            role = c("aut", "cre"),
            email = "hans@mazamascience.com")
 Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to
-    pick a license
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
@@ -16,4 +15,10 @@ RoxygenNote: 7.1.1
 Imports: 
     htmltools,
     htmlwidgets,
-    crosstalk
+    crosstalk, 
+    dplyr,
+    stringr,
+    lubridate,
+    MazamaCoreUtils,
+    xts, 
+    zoo

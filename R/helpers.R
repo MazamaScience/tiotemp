@@ -1,6 +1,6 @@
 #' @keywords internal
-#' @importFrom rlang .data
 #' @importFrom stats aggregate median na.omit quantile sd t.test time
+#' @importFrom dplyr `%>%` mutate mutate_all left_join
 #'
 #' @title Aggregate data.frame Object
 #'

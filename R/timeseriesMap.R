@@ -1,6 +1,6 @@
-#' Timeseries Leaflet Map
+#' @title Timeseries Leaflet Map
 #'
-#' A timeseries leaflet map that displays point location timeseries data and
+#' @description A timeseries leaflet map that displays point location timeseries data and
 #' allows playback.
 #'
 #' @param data A data.frame that contains the hourly-resolution point location
@@ -21,7 +21,10 @@
 #' Documentation WIP.
 #'
 #' @examples
-#'
+#' library(tiotemp)
+#' library(AirSensor)
+#' sensor <- example_sensor
+#' timeseriesMap(sensor$data, sensor$meta)
 #'
 #' @import htmlwidgets
 #'

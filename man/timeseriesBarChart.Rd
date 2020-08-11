@@ -2,15 +2,26 @@
 % Please edit documentation in R/timeseriesBarChart.R
 \name{timeseriesBarChart}
 \alias{timeseriesBarChart}
-\title{<Add Title>}
+\title{Timeseries Bar Chart}
 \usage{
 timeseriesBarChart(data, meta, index = "monitorID", label = "label", ...)
 }
+\arguments{
+\item{data}{A data.frame that contains the hourly-resolution point location
+timeseries data. See Details.}
+
+\item{meta}{A data.frame that contains the point location metadata. See Details.}
+
+\item{index}{A string to index point location metadata and temporal data by.}
+
+\item{label}{A string to index point location metadata label by.}
+
+\item{...}{Additional arguments. See details.}
+}
 \description{
-<Add Description>
+A timeseries barchart.
 }
 \examples{
-library(AirSensor)
-sensor <- example_sensor
-timeseriesBarChart(meta = sensor$meta, data = sensor$data)
+library(tiotemp)
+timeseriesBarChart(data = sensor$data, meta = sensor$meta)
 }

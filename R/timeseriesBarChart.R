@@ -1,14 +1,20 @@
-#' <Add Title>
+#' @title Timeseries Bar Chart
 #'
-#' <Add Description>
+#' @description A timeseries barchart.
+#'
+#' @param data A data.frame that contains the hourly-resolution point location
+#' timeseries data. See Details.
+#' @param meta A data.frame that contains the point location metadata. See Details.
+#' @param index A string to index point location metadata and temporal data by.
+#' @param label A string to index point location metadata label by.
+#' @param ... Additional arguments. See details.
 #'
 #' @import htmlwidgets
 #'
 #' @export
 #' @examples
-#' library(AirSensor)
-#' sensor <- example_sensor
-#' timeseriesBarChart(meta = sensor$meta, data = sensor$data)
+#' library(tiotemp)
+#' timeseriesBarChart(data = sensor$data, meta = sensor$meta)
 timeseriesBarChart <- function(
   data,
   meta,

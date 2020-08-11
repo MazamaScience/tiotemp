@@ -1,14 +1,22 @@
-#' <Add Title>
+#' @title Timeseries Calendar Heatmap
 #'
-#' <Add Description>
+#' @description
+#'
+#' @param data A data.frame that contains the hourly-resolution point location
+#' timeseries data. See Details.
+#' @param meta A data.frame that contains the point location metadata. See Details.
+#' @param index A string to index point location metadata and temporal data by.
+#' @param label A string to index point location metadata label by.
+#' @param ... Additional arguments. See details.
 #'
 #' @import htmlwidgets
 #'
 #' @export
 #' @examples
+#' library(tiotemp)
 #' library(AirSensor)
 #' sensor <- example_sensor
-#' timeseriesCalendar(data = sensor$data, meta = sensor$data)
+#' timeseriesCalendar(data = sensor$data, meta = sensor$meta)
 timeseriesCalendar <- function(
   data,
   meta,
