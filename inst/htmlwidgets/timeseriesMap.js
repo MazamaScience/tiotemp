@@ -130,7 +130,7 @@ HTMLWidgets.widget({
           });
         };
 
-                      // create a tooltip
+        // create a tooltip
         let tooltip =   d3.select("#" + el.id)
           .select(".leaflet-pane")
           .append("svg")
@@ -186,13 +186,12 @@ HTMLWidgets.widget({
             .attr("r", 10.5)
             .style("cursor", "pointer");
           tooltip
-            .style("width", d.label.length * 8 + "px")
-            .style("height", "2em")
+            .style("width", d.label.length * 10 + "px")
+            .style("height", "2.5em")
             .transition()
-            .duration(130)
+            .duration(100)
             .style("opacity", 0.75)
-            .style("left", `${d3.mouse(this)[0] - 35}px`)
-            .style("top", `${d3.mouse(this)[1] - 48}px`)
+            .style("transform", `translate3d(${this.cx.animVal.value}px, ${this.cy.animVal.value}px, 0px)`)
           tooltip
             .append("text")
             .text(d.label)

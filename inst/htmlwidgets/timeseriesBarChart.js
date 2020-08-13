@@ -260,9 +260,9 @@ HTMLWidgets.widget({
       },
 
       resize: function (width, height) {
-        canvas
+/*        canvas
           .attr("width", width)
-          .attr("height", height);
+          .attr("height", height);*/
       }
 
     };

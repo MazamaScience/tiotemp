@@ -222,7 +222,7 @@ HTMLWidgets.widget({
               .style("stroke", "red")
             tooltip
               .style("width", "75px")
-              .style("height", "2em")
+              .style("height", "2.5em")
               .transition()
               .duration(130)
               .style("opacity", 0.75)
@@ -261,7 +261,7 @@ HTMLWidgets.widget({
         };
 
         // Allow shiny updating
-        if(x.inputId != null) {
+        if( x.inputId != null ) {
           let selectedLabel;
           $("#" + x.inputId).on("change", function() {
             selectedLabel = this.value;
