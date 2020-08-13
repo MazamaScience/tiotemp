@@ -98,7 +98,7 @@ HTMLWidgets.widget({
           .style("border-width", "2px")
           .style("border-radius", "5px")
           .style("padding", "5px")
-          .style("position", "absolute")
+          .style("position", "relative")
           .style("z-index", 666)
 
         let drawCalendar = function(dailyData) {
@@ -218,6 +218,7 @@ HTMLWidgets.widget({
           // Add mouseover highlighting
           function cellMouseOver(d) {
             tooltip.selectAll("text").remove()
+            console.log(d3.mouse(this))
             d3.select(d3.event.target)
               .style("stroke", "red")
             tooltip
@@ -226,8 +227,8 @@ HTMLWidgets.widget({
               .transition()
               .duration(130)
               .style("opacity", 0.75)
-              .style("left", `${d3.event.pageX}px`)
-              .style("top", `${d3.event.pageY}px`)
+              .style("left", `${this.x.animVal.value}px`)
+              .style("top", `${this.y.animVal.value}px`)
             tooltip
             .append("text")
             .text(() => {
