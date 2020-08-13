@@ -44,6 +44,9 @@ HTMLWidgets.widget({
         let xScale; // init function for scaling function
         let yScale;
 
+        // Remove old stuff first!
+        d3.select("#" + el.id).selectAll("svg").remove()
+
         let canvas = d3.select("#"+el.id)
             .append("svg")
             .attr("width", width)
@@ -146,21 +149,21 @@ HTMLWidgets.widget({
             .text(x.xlab);
         };
 
-      // create a tooltip
-      let tooltip =   d3.select("#"+el.id)
-        .append("div")
-        .style("opacity", 0)
-        .attr("class", "tooltip")
-        .style("background-color", "transparent")
-        .style("padding", "5px")
-        .style("position", "relative")
-        .style("top", "-92%")
-        .style("left", "72%")
-        .style("width", "25%")
-
         let drawBars = function(barData) {
 
           d3.select("#" + el.id).selectAll(".bar").remove();
+          d3.select("#" + el.id).selectAll(".tooltip").remove();
+                // create a tooltip
+          let tooltip = d3.select("#" + el.id)
+            .append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0)
+            .style("background-color", "transparent")
+            .style("padding", "5px")
+            .style("position", "relative")
+            .style("top", "-92%")
+            .style("left", "72%")
+            .style("width", "25%")
 
           function barMouseOver(d) {
             date = d.date;

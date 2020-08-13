@@ -35,6 +35,9 @@ HTMLWidgets.widget({
     return {
       renderValue: function (x) {
 
+        // Remove old stuff first!
+        d3.select("#" + el.id).selectAll("svg").remove()
+
         // Create color ramp profile using options
         let colorMap = d3.scaleThreshold()
           .domain(x.breaks)
@@ -370,13 +373,14 @@ HTMLWidgets.widget({
               );
           // Get # of date ticks for slider based on date length
           let nTicks;
-          if ( dateDomain.length/24 > 29 ) {
+/*          if ( dateDomain.length/24 > 29 ) {
             nTicks = 7;
           } else if ( dateDomain.length/24 > 16 ) {
             nTicks = 4;
           } else {
-            nTicks = 1;
-          }
+            nTicks = dateDomain.length/24;
+          }*/
+          nTicks = 7
           // Add the slider track overlay
           let track = slider.insert("g", ".track-overlay")
             .attr("class", "ticks")

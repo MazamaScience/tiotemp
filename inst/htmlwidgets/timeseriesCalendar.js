@@ -53,6 +53,9 @@ HTMLWidgets.widget({
         // Index IDs using passed in index str
         let indexIds = meta.map(d => { return d[x.index] });
 
+        // Remove old stuff first!
+        d3.select("#" + el.id).selectAll("svg").remove()
+
         // Create canvas
         let canvas = d3.select('#' + el.id)
           .selectAll("svg")
