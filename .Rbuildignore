@@ -1,2 +1,33 @@
+# Ignore RStudio files
 ^.*\.Rproj$
 ^\.Rproj\.user$
+
+# Ignore various yaml files associated with package building packages
+^\.lintr$
+
+# Ignore LICENSE file which is included for display on Github
+^LICENSE$
+
+# Ignore .gitignore
+^\.gitignore$
+
+# Ignore all directories beginning with "local"
+^local*
+
+# Ignore pkgdown input and output files
+^docs$
+^_pkgdown.yml
+^pkgdown/
+^logo\.png$
+
+# Ignore other directories
+^app$
+^docker$
+
+# Ignore configuration files for other tools
+^\.travis\.yml$
+^data-raw$
+
+# Ignore cran-comments.md
+^cran-comments.md
+^CRAN-RELEASE$

@@ -1,24 +1,35 @@
 Package: tiotemp
 Title: Spatiotemporal Visualizations
-Version: 0.2.1
-Authors@R: 
+Version: 0.2.2
+Authors@R: c(
     person(given = "Hans",
            family = "Martin",
            role = c("aut", "cre"),
-           email = "hans@mazamascience.com")
-Description: What the package does (one paragraph).
+           email = "hans@mazamascience.com"),
+    person(given = "Jonathan",
+           family = "Callahan",
+           role = c("aut"),
+           email = "jonathan.s.callahan@gmail.com")
+           )
+Maintainer: Hans Martin <hans@mazamascience.com>
+Description: Spatio-temporal visualizations for environmental monitoring data.
+    Visualizations based on the javascript d3 library include a map, barplot and
+    calendar plot. R wrappers based on the htmlwidgets package allow easy 
+    inclusion of these interactive plots in Rmarkdown documents and shiny apps.
+URL: https://github.com/MazamaScience/tiotemp
+BugReports: https://github.com/MazamaScience/tiotemp/issues
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 Imports: 
-    htmltools,
-    htmlwidgets,
     crosstalk, 
     dplyr,
-    stringr,
+    htmltools,
+    htmlwidgets,
     lubridate,
     MazamaCoreUtils,
+    stringr,
     xts, 
     zoo
