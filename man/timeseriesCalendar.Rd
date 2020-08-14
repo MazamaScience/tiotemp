@@ -23,7 +23,9 @@ timeseries data. See Details.}
 }
 \examples{
 library(tiotemp)
-library(AirSensor)
-sensor <- example_sensor
-timeseriesCalendar(data = sensor$data, meta = sensor$meta)
+
+sensor <- example_airsensor_object
+
+timeseriesCalendar(data = sensor$data[,c(1,2)], meta = sensor$meta[1,])
+
 }

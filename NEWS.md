@@ -2,6 +2,7 @@
 # tiotemp 0.2.2
 
 * Additional cleanup of DESCRIPTION file and function documentation.
+* Inculding example datasets for `example_airsensor_object`.
 
 # tiotemp 0.2.1
 
