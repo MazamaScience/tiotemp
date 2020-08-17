@@ -1,4 +1,8 @@
 
+# tiotemp 0.2.3
+
+* Improved documentation and some cleanup of `timeseriesMap()`.
+
 # tiotemp 0.2.2
 
 * Additional cleanup of DESCRIPTION file and function documentation.

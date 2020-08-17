@@ -7,38 +7,68 @@
 timeseriesMap(data, meta, index = "monitorID", label = "label", ...)
 }
 \arguments{
-\item{data}{A data.frame that contains the hourly-resolution point location
-timeseries data. See Details.}
+\item{data}{Dataframe that contains point location time series data. See Details.}
 
-\item{meta}{A data.frame that contains the point location metadata. See Details.}
+\item{meta}{Dataframe that contains the point location metadata. See Details.}
 
-\item{index}{A string to index point location metadata and temporal data by.}
+\item{index}{Column name in \code{meta} containing the unique identifier for
+each location.}
 
-\item{label}{A string to index point location metadata label by.}
+\item{label}{Column name in \code{meta} containing the human readable label
+associated with each location. This is displayed when mousing over a location.}
 
 \item{...}{Additional arguments. See details.}
 }
 \description{
-A timeseries leaflet map that displays point location timeseries data and
-allows playback.
+Creates a timeseries leaflet map that displays point location
+time series data and allows playback with a slider and "Play" button.
 }
 \details{
+Use of this function requires \code{data} and \code{meta} dataframes that
+are linked by location-specific unique identifiers. In \code{meta}, each row
+contains location metadata associated with a unique timeseries. The unique
+identifiers for are found in \code{meta[[index]]}. The \code{data} dataframe
+uses these identifiers as column names with a separate column of data for
+each timeseries.
+
+\code{data} must be a dataframe of regular time series data.
+The \code{data} dataframe \emph{must} contain one 'datetime' column. All other
+columns must have the names specified in \code{meta[[index]]}.
+
+\code{meta} must be a dataframe that contains location information associated
+with the timeseries found in \code{data}. The \code{meta} dataframe \emph{must}
+contain a column with the name specified with \code{index} and another with
+the column name specified with \code{label}.
+
+\code{...} Additional (optional) configuration arguments:
+
 \itemize{
-\item \code{data} must be a data.frame of hourly-resolution point location data.
-The data \emph{must} contain one 'datetime' column and \emph{at least} one column that can
-be column indexed with parameter \code{index} via \code{data$index}.
-\item \code{meta} must be a data.frame that contains information corresponding to
-\code{data} point location timeseries data. The \code{meta} data.frame \emph{must}
-contain \emph{at least} a \code{label} column and an \code{index} columns.
-\item \code{...} Additional configuration arguments: width, height, elementId, colors, breaks, inputId.
-Documentation WIP.
+\item{\code{width} -- widget width}
+\item{\code{height} -- widget_height}
+\item{\code{colors} -- colors}
+\item{\code{breaks} -- color ramp breaks}
+\item{\code{elementId} -- HTML element ID}
+\item{\code{inputId} -- shiny input ID}
 }
+}
+\note{
+When specifying \code{colors} and \code{breaks}, you must use the
+\pkg{d3} idiom where the vector of colors is one longer than the vector of
+breaks. Everything below the lowest break gets the lowest color. Everything
+above the highest break gets the highest color.
 }
 \examples{
 library(tiotemp)
 
-sensor <- example_airsensor_object
+sensor <- example_pwfslsmoke_object
 
-timeseriesMap(sensor$data, sensor$meta)
+timeseriesMap(
+  data = sensor$data,
+  meta = sensor$meta,
+  index = "monitorID",
+  label = "siteName",
+  colors = c("#00E400","#FFFF00","#FF7E00","#FF0000","#8F3F97","#7E0023"),
+  breaks = c(12.0, 35.5,  55.5, 150.5, 250.5)
+)
 
 }
