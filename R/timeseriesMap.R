@@ -1,30 +1,62 @@
 #' @title Timeseries Leaflet Map
 #'
-#' @description A timeseries leaflet map that displays point location timeseries data and
-#' allows playback.
+#' @description Creates a timeseries leaflet map that displays point location
+#' time series data and allows playback with a slider and "Play" button.
 #'
-#' @param data A data.frame that contains the hourly-resolution point location
-#' timeseries data. See Details.
-#' @param meta A data.frame that contains the point location metadata. See Details.
-#' @param index A string to index point location metadata and temporal data by.
-#' @param label A string to index point location metadata label by.
+#' @param data Dataframe that contains point location time series data. See Details.
+#' @param meta Dataframe that contains the point location metadata. See Details.
+#' @param index Column name in \code{meta} containing the unique identifier for
+#' each location.
+#' @param label Column name in \code{meta} containing the human readable label
+#' associated with each location. This is displayed when mousing over a location.
 #' @param ... Additional arguments. See details.
 #'
 #' @details
-#' - \code{data} must be a data.frame of hourly-resolution point location data.
-#' The data _must_ contain one 'datetime' column and _at least_ one column that can
-#' be column indexed with parameter \code{index} via \code{data$index}.
-#' - \code{meta} must be a data.frame that contains information corresponding to
-#' \code{data} point location timeseries data. The \code{meta} data.frame _must_
-#' contain _at least_ a \code{label} column and an \code{index} columns.
-#' - \code{...} Additional configuration arguments: width, height, elementId, colors, breaks, inputId.
-#' Documentation WIP.
+#' Use of this function requires \code{data} and \code{meta} dataframes that
+#' are linked by location-specific unique identifiers. In \code{meta}, each row
+#' contains location metadata associated with a unique timeseries. The unique
+#' identifiers for are found in \code{meta[[index]]}. The \code{data} dataframe
+#' uses these identifiers as column names with a separate column of data for
+#' each timeseries.
+#'
+#' \code{data} must be a dataframe of regular time series data.
+#' The \code{data} dataframe _must_ contain one 'datetime' column. All other
+#' columns must have the names specified in \code{meta[[index]]}.
+#'
+#' \code{meta} must be a dataframe that contains location information associated
+#' with the timeseries found in \code{data}. The \code{meta} dataframe _must_
+#' contain a column with the name specified with \code{index} and another with
+#' the column name specified with \code{label}.
+#'
+#' \code{...} Additional (optional) configuration arguments:
+#'
+#' \itemize{
+#' \item{\code{width} -- widget width}
+#' \item{\code{height} -- widget_height}
+#' \item{\code{colors} -- colors}
+#' \item{\code{breaks} -- color ramp breaks}
+#' \item{\code{elementId} -- HTML element ID}
+#' \item{\code{inputId} -- shiny input ID}
+#' }
+#'
+#' @note When specifying \code{colors} and \code{breaks}, you must use the
+#' \pkg{d3} idiom where the vector of colors is one longer than the vector of
+#' breaks. Everything below the lowest break gets the lowest color. Everything
+#' above the highest break gets the highest color.
 #'
 #' @examples
 #' library(tiotemp)
-#' library(AirSensor)
-#' sensor <- example_sensor
-#' timeseriesMap(sensor$data, sensor$meta)
+#'
+#' sensor <- example_pwfslsmoke_object
+#'
+#' timeseriesMap(
+#'   data = sensor$data,
+#'   meta = sensor$meta,
+#'   index = "monitorID",
+#'   label = "siteName",
+#'   colors = c("#00E400","#FFFF00","#FF7E00","#FF0000","#8F3F97","#7E0023"),
+#'   breaks = c(12.0, 35.5,  55.5, 150.5, 250.5)
+#' )
 #'
 #' @import htmlwidgets
 #'
@@ -35,36 +67,50 @@ timeseriesMap <- function(
   index = "monitorID",
   label = "label",
   ...
-  ) {
+) {
 
-  # Checks
-  if ( is.null(index) ) {
-    stop("parameter 'index' is required.")
-  }
-  if ( is.null(label) ) {
-    stop("parameter 'label' is required.")
-  }
+  # ----- Validate parameters --------------------------------------------------
+
+  MazamaCoreUtils::stopIfNull(index)
+  MazamaCoreUtils::stopIfNull(label)
+
+  # ----- Widget defaults ------------------------------------------------------
+
+  # TODO:  To be used in d3.scaleThreshold(), there should be one fewer breaks
+  # TODO:  than colors. Here is the code form timeseriesMap.js:
+  # TODO:
+  # TODO:  // Create color ramp profile using options
+  # TODO:  let colorMap = d3.scaleThreshold()
+  # TODO:  .domain(x.breaks)
+  # TODO:  .range(x.colors);
+
+  colors_scaqmd <- c("#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a")
+  breaks_scaqmd <- c(12, 35, 55, 75, 100)
 
   # Store extra args
   args <- list( ... )
 
   # Set default colors
   if ( !"colors" %in% names(args) ) {
-    args$colors <- c("#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a")
+    args$colors <- colors_scaqmd
   }
   if ( !"breaks" %in% names(args) ) {
-    args$breaks <- c(12, 35, 55, 75, 100)
+    args$breaks <- breaks_scaqmd
   }
 
-  # Aval config arguments
+  # Available config arguments
   config = list(
     width = args$width, # width
     height = args$height, # height
-    elementId = args$elementId, # html element ID
     breaks = args$breaks, # color ramp breaks
     colors = args$colors, # colors
+<<<<<<< HEAD
     inputId = args$inputId, # Shiny input id
     selected = args$selected # On creation selected point
+=======
+    elementId = args$elementId, # html element ID
+    inputId = args$inputId # Shiny input id
+>>>>>>> origin/jon
   )
 
   # Create data list
@@ -75,11 +121,13 @@ timeseriesMap <- function(
     label = label
   )
 
-  # Create data object for forwarding
+  # Create data object for forwarding to javascript
   x <- append(dataList, config)
 
-  # create widget
-  htmlwidgets::createWidget(
+  # ----- Create widget --------------------------------------------------------
+
+  # Create widget
+  widget <- htmlwidgets::createWidget(
     name = 'timeseriesMap',
     x = x,
     width = config$width,
@@ -94,11 +142,13 @@ timeseriesMap <- function(
     )
   )
 
+  return(widget)
+
 }
 
-#' Shiny bindings for timeseriesMap
+#' @title Shiny bindings for timeseriesMap
 #'
-#' Output and render functions for using timeseriesMap within Shiny
+#' @description Output and render functions for using timeseriesMap within Shiny
 #' applications and interactive Rmd documents.
 #'
 #' @param outputId output variable to read from
@@ -113,13 +163,32 @@ timeseriesMap <- function(
 #' @name timeseriesMap-shiny
 #'
 #' @export
-timeseriesMapOutput <- function(outputId, width = '100%', height = '400px'){
-  htmlwidgets::shinyWidgetOutput(outputId, 'timeseriesMap', width, height, package = 'tiotemp')
+timeseriesMapOutput <- function(
+  outputId,
+  width = '100%',
+  height = '400px'
+) {
+  htmlwidgets::shinyWidgetOutput(
+    outputId,
+    'timeseriesMap',
+    width,
+    height,
+    package = 'tiotemp'
+  )
 }
 
 #' @rdname timeseriesMap-shiny
 #' @export
-renderTimeseriesMap <- function(expr, env = parent.frame(), quoted = FALSE) {
+renderTimeseriesMap <- function(
+  expr,
+  env = parent.frame(),
+  quoted = FALSE
+) {
   if (!quoted) { expr <- substitute(expr) } # force quoted
-  htmlwidgets::shinyRenderWidget(expr, timeseriesMapOutput, env, quoted = TRUE)
+  htmlwidgets::shinyRenderWidget(
+    expr,
+    timeseriesMapOutput,
+    env,
+    quoted = TRUE
+  )
 }

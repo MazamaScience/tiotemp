@@ -14,7 +14,11 @@
 #' @export
 #' @examples
 #' library(tiotemp)
-#' timeseriesBarChart(data = sensor$data, meta = sensor$meta)
+#'
+#' sensor <- example_airsensor_object
+#'
+#' timeseriesBarChart(data = sensor$data[,c(1,2)], meta = sensor$meta[1,])
+#'
 timeseriesBarChart <- function(
   data,
   meta,
