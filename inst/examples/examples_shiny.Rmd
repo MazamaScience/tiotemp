@@ -43,7 +43,7 @@ wellPanel(
 
 ```{r map1, include=FALSE}
 output$map1 <- renderTimeseriesMap({
-  timeseriesMap(sensors$data, sensors$meta, inputId = "sensor", breaks = breaks, colors = colors)
+  timeseriesMap(sensors$data, sensors$meta, inputId = "sensor", breaks = breaks, colors = colors, selected = 'SCAH_05')
 })
 ```
 

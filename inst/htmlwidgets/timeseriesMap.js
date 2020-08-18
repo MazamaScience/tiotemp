@@ -163,7 +163,6 @@ HTMLWidgets.widget({
               if ( typeof d.data[dateIndex] !== 'undefined' ) {
                 return d.data[dateIndex].color
               }
-
             })
           };
 
@@ -263,6 +262,21 @@ HTMLWidgets.widget({
 
           // init colors on startdate
           updatePointFill(sd);
+
+          // if the user provides a selected sensor, draw it without point restore
+          if ( x.selected != null ) {
+            d3.select("#" + el.id)
+              .selectAll(`[point-label=${x.selected}]`)
+              .raise()
+              .transition()
+              .duration(200)
+              .attr("stroke-width", 3)
+              .style("fill-opacity", 1)
+              .style("stroke-opacity", 0.75)
+              .style("stroke", "#282b30");
+
+          }
+
 
         };
 
@@ -440,7 +454,7 @@ HTMLWidgets.widget({
         // Update point locations on map changes
         map.on("moveend", updatePointLocation);
 
-      },
+        },
 
       resize: function (width, height) {
 

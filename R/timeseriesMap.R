@@ -63,7 +63,8 @@ timeseriesMap <- function(
     elementId = args$elementId, # html element ID
     breaks = args$breaks, # color ramp breaks
     colors = args$colors, # colors
-    inputId = args$inputId # Shiny input id
+    inputId = args$inputId, # Shiny input id
+    selected = args$selected # On creation selected point
   )
 
   # Create data list
