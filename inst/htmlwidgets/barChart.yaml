@@ -4,3 +4,7 @@ dependencies:
    src: htmlwidgets/lib/plotly
    script: plotly-latest.min.js
    #stylesheet:
+ - name: d3
+   version: 5.16.0
+   src: htmlwidgets/lib/d3
+   script: d3.js

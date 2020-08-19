@@ -5,21 +5,64 @@
 #' @import htmlwidgets
 #'
 #' @export
-barChart <- function(message, width = NULL, height = NULL, elementId = NULL) {
+barChart <- function(
+  data,
+  meta,
+  index = 'monitorID',
+  label = 'label',
+  ...
+) {
 
-  # forward options using x
-  x = list(
-    message = message
+  # Checks
+  if ( is.null(index) ) {
+    stop("parameter 'index' is required.")
+  }
+  if ( is.null(label) ) {
+    stop("parameter 'label' is required.")
+  }
+
+  # Store extra args
+  args <- list( ... )
+
+  # Set default colors
+  if ( !"colors" %in% names(args) ) {
+    args$colors <- c("#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a")
+  }
+  if ( !"breaks" %in% names(args) ) {
+    args$breaks <- c(12, 35, 55, 75, 100)
+  }
+
+  # Aval config arguments
+  config = list(
+    width = args$width, # width
+    height = args$height, # height
+    elementId = args$elementId, # html element ID
+    breaks = args$breaks, # color ramp breaks
+    colors = args$colors, # colors
+    inputId = args$inputId, # Shiny input id
+    ylab = args$ylab, # y axis label
+    xlab = args$xlab # x axis label
   )
+
+  # Create data list
+  dataList <- list(
+    data = data,
+    meta = meta,
+    index = index,
+    label = label
+  )
+
+  # Create data object for forwarding
+  x <- append(dataList, config)
 
   # create widget
   htmlwidgets::createWidget(
     name = 'barChart',
     x,
-    width = width,
-    height = height,
+    width = args$width,
+    height = args$hieght,
     package = 'tiotemp',
-    elementId = elementId
+    elementId = args$elementId
   )
 }
 

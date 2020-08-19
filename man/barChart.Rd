@@ -4,7 +4,7 @@
 \alias{barChart}
 \title{<Add Title>}
 \usage{
-barChart(message, width = NULL, height = NULL, elementId = NULL)
+barChart(data, meta, index = "monitorID", label = "label", ...)
 }
 \description{
 <Add Description>
