@@ -142,7 +142,7 @@ HTMLWidgets.widget({
           .style("border-width", "2px")
           .style("border-radius", "5px")
           .style("padding", "5px")
-          .style("z-index", 666)
+          .style("z-index", 6666)
 
         // Update the points position on map move
         function updatePointLocation() {
@@ -184,25 +184,29 @@ HTMLWidgets.widget({
             .duration(100)
             .attr("r", 10.5)
             .style("cursor", "pointer");
+
+            console.log(this)
+            console.log(d)
           tooltip
-            .style("width", d.label.length * 10 + "px")
-            .style("height", "2.5em")
+            .style("width", "74px")
+            .style("height", "28px")
             .transition()
-            .duration(100)
+            .delay(500)
+            //.duration(500)
             .style("opacity", 0.75)
-            .style("transform", `translate3d(${this.cx.animVal.value}px, ${this.cy.animVal.value}px, 0px)`)
           tooltip
+            .style("transform", `translate3d(${this.cx.baseVal.value - 37}px, ${this.cy.baseVal.value - 44}px, 0px)`)
             .append("text")
             .text(d.label)
             .style("fill", "white")
-            .style("font-size", "1em")
+            .style("font-size", "14px")
             .attr("x", "0em")
             .attr("y", "1em")
         };
 
         // Return radius on mouseout
         function mouseOutPoint() {
-          tooltip.transition().duration(150).style("opacity", 0)
+          tooltip.attr("z-index", -1).transition().duration(150).style("opacity", 0)
           d3.select(this)
             .transition()
             .duration(150)
