@@ -83,17 +83,23 @@ HTMLWidgets.widget({
               },
           };
 
+          let config = {
+            displayModeBar: false,
+            responsive: true
+          };
+
           // Plotly.react has the same signature as Plotly.newPlot
-          return Plotly.react(canvas, plotData, layout, {displayModeBar: false});
+          return Plotly.react(canvas, plotData, layout, config);
         }
 
         update(selectedData);
 
       },
 
-      resize: function(width, height) {
+      resize: function(el, width, height) {
 
         // TODO: code to re-render the widget with a new size
+        Plotly.relayout(el.id, {width: width, height: height});
 
       }
 
