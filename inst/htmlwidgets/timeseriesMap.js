@@ -184,9 +184,6 @@ HTMLWidgets.widget({
             .duration(100)
             .attr("r", 10.5)
             .style("cursor", "pointer");
-
-            console.log(this)
-            console.log(d)
           tooltip
             .style("width", "74px")
             .style("height", "28px")

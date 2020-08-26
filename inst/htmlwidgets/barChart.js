@@ -39,7 +39,6 @@ HTMLWidgets.widget({
             })
           }
         });
-        console.log(barData)
 
         let selectedData = barData[0];
 
