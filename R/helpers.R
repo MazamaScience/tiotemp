@@ -19,6 +19,7 @@
 #' \code{na.rm = TRUE}. See the examples below.
 #'
 #' @return Returns an aggregated \emph{data.frame} object.
+#' @export
 .daily_aggregate <- function(df, FUN =  function(x) { mean(x, na.rm = TRUE) }) {
 
   data <- df

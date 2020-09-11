@@ -7,6 +7,7 @@
 #' @param meta A data.frame that contains the point location metadata. See Details.
 #' @param index A string to index point location metadata and temporal data by.
 #' @param label A string to index point location metadata label by.
+#' @param full Fill and display full calendar year.
 #' @param ... Additional arguments. See details.
 #'
 #' @import htmlwidgets
@@ -24,6 +25,7 @@ timeseriesCalendar <- function(
   meta,
   index = 'monitorID',
   label = 'label',
+  full = TRUE,
   ...
   ) {
 
@@ -40,10 +42,10 @@ timeseriesCalendar <- function(
 
   # Set default colors
   if ( !"colors" %in% names(args) ) {
-    args$colors <- c("#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a")
+    args$colors <- c("#ededed", "#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a")
   }
   if ( !"breaks" %in% names(args) ) {
-    args$breaks <- c(12, 35, 55, 75, 100)
+    args$breaks <- c(0.1, 12, 35, 55, 75, 100)
   }
 
   # Aval config arguments
@@ -57,6 +59,10 @@ timeseriesCalendar <- function(
   )
 
   dailyData <- .daily_aggregate(data)
+
+  if ( full ) {
+    dailyData <- dplyr::full_join(dplyr::tibble("datetime" = seq(lubridate::ymd_h(strftime(dailyData$datetime[1], "%Y010100")), lubridate::ymd_h(strftime(dailyData$datetime[nrow(dailyData)], "%Y123100")), by = "day")), dailyData, "datetime")
+  }
 
   # Create data list
   dataList <- list(

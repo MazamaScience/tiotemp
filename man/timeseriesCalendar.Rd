@@ -4,7 +4,14 @@
 \alias{timeseriesCalendar}
 \title{Timeseries Calendar Heatmap}
 \usage{
-timeseriesCalendar(data, meta, index = "monitorID", label = "label", ...)
+timeseriesCalendar(
+  data,
+  meta,
+  index = "monitorID",
+  label = "label",
+  full = TRUE,
+  ...
+)
 }
 \arguments{
 \item{data}{A data.frame that contains the hourly-resolution point location
@@ -15,6 +22,8 @@ timeseries data. See Details.}
 \item{index}{A string to index point location metadata and temporal data by.}
 
 \item{label}{A string to index point location metadata label by.}
+
+\item{full}{Fill and display full calendar year.}
 
 \item{...}{Additional arguments. See details.}
 }

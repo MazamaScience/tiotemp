@@ -58,11 +58,15 @@ HTMLWidgets.widget({
 
         // Create canvas
         let canvas = d3.select('#' + el.id)
+          .append("div")
+            .attr("class", "grid-container")
+            .style("display", "inline-grid")
+            .style("grid-template-columns", "auto auto auto auto")
+            .style("padding", "5px")
           .selectAll("svg")
           .attr("width", width)
           .attr("height", height)
           .attr("preserveAspectRatio", "xMinYMin meet")
-          .attr("viewBox", `0 0 ${width} ${height}`)
           .attr("style", "background-color:white")
           .classed("svg-content", true);
 
@@ -98,14 +102,14 @@ HTMLWidgets.widget({
           .style("border-width", "2px")
           .style("border-radius", "5px")
           .style("padding", "5px")
-          .style("position", "relative")
+          .style("position", "absolute")
           .style("z-index", 666)
 
         let drawCalendar = function(dailyData) {
 
         d3.select("#" + el.id).selectAll(".month-cell").remove();
 
-                // calc the months in date domain
+        // calc the months in date domain
         months = d3.timeMonth.range(d3.timeMonth.floor(sd), ed);
 
         // Add month svgs
@@ -218,7 +222,7 @@ HTMLWidgets.widget({
           // Add mouseover highlighting
           function cellMouseOver(d) {
             tooltip.selectAll("text").remove()
-            console.log(d3.mouse(this))
+            console.log([d3.event.pageX, d3.event.pageY])
             d3.select(d3.event.target)
               .style("stroke", "red")
             tooltip
@@ -227,8 +231,7 @@ HTMLWidgets.widget({
               .transition()
               .duration(130)
               .style("opacity", 0.75)
-              .style("left", `${this.x.animVal.value}px`)
-              .style("top", `${this.y.animVal.value}px`)
+              .style("transform", `translate3d(${d3.event.pageX- width - 36}px, ${d3.event.pageY - 36}px, 0px)`)
             tooltip
             .append("text")
             .text(() => {
@@ -241,6 +244,8 @@ HTMLWidgets.widget({
             .attr("x", "0em")
             .attr("y", "1em")
               }
+
+              // d3.event.pageX, d3.event.pageY
 
           function cellMouseOut(d) {
             d3.select(d3.event.target)

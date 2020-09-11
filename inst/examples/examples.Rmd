@@ -16,7 +16,7 @@ library(AirSensor)
 
 ```{r}
 setArchiveBaseUrl("http://data.mazamascience.com/PurpleAir/v1") # SCAQMD sensors
-sensors <- sensor_load()
+sensors <- sensor_load(startdate = 20200801, enddate = 20200910)
 labels <- sensors$meta$label
 ```
 
@@ -34,8 +34,9 @@ timeseriesBarChart(sensors$meta, sensors$data)
 timeseriesCalendar(sensors$data, sensors$meta)
 ```
 
+
 ```{r}
-meta_quakes <- quakes[,c('lat','long', 'stations')]
-data_quakes <- quakes[]
+
+
 ```
 
