@@ -4,286 +4,312 @@ HTMLWidgets.widget({
 
   type: 'output',
 
+  // prepare the html element
   factory: function (el, width, height) {
 
-    let margin = {
-        top: 25,
-        bottom: 25,
-        left: 25,
-        right: 25
-    };
 
     let cellMargin = 2,
-        cellSize = 30;
+      cellSize = width/(28 + 2*cellMargin ); // 28 days per row and padding
 
-    /*
-    Helpers
-    */
+    function prepData(X) {
 
-    // Calulate the number of rows per month
-    let monthRows = function (month) {
-      let m = d3.timeMonth.floor(month);
-      return d3.timeWeeks(d3.timeWeek.floor(m),
-        d3.timeMonth.offset(m, 1)).length;
+      // Remap the colors
+      const colorMap = function(value) {
+        if ( value === null ) {
+          return "#F4F4F4"
+        } else {
+          return d3.scaleThreshold()
+                   .domain(X.breaks)
+                   .range(X.colors)(value);
+        }
+      };
+
+      // Remap the values
+      const valueMap = function(value) {
+        if ( value === 0 ) {
+          return undefined
+        } else {
+          return value
+        }
+      }
+      // https://stackoverflow.com/a/53652131
+      function changeTz(date, ianatz = 'UTC') {
+
+        // suppose the date is 12:00 UTC
+        var invdate = new Date(date.toLocaleString('en-US', {
+          timeZone: ianatz
+        }));
+
+        // then invdate will be 07:00 in Toronto
+        // and the diff is 5 hours
+        var diff = date.getTime() - invdate.getTime();
+
+        // so 12:00 in Toronto is 17:00 UTC
+        return new Date(date.getTime() + diff);
+
+    }
+
+      // Load the data
+      const meta = HTMLWidgets.dataframeToD3(X.meta);
+      const data = HTMLWidgets.dataframeToD3(X.data);
+
+      let dateDomain = data.map(d => {
+        return d.datetime
+      });
+      let sd = new Date(dateDomain.slice(1)[0]),
+        ed = new Date(dateDomain.slice(-1)[0]);
+
+      // Index IDs using passed in index str
+      const indexIds = meta.map(d => {
+        return d[X.index]
+      });
+
+      const dailyData = indexIds.map(id => {
+        return {
+          id: id,
+          label: meta.filter(d => { return d[X.index] == id })[0][X.label],
+          data: data.map(d => {
+            return {
+              date: d3.timeFormat("%Y-%m-%d")(new Date(d.datetime)),
+              value: valueMap(+d[id]),
+              color: colorMap(+d[id])
+            }
+          }),
+          domain: {
+            sd,
+            ed
+          }
+        }
+      });
+
+      return dailyData
+
     };
 
-    let dayFormat = d3.timeFormat("%w"),
-      weekFormat = d3.timeFormat("%U"),
-      format = d3.timeFormat("%Y-%m-%d"),
-      titleFormat = d3.utcFormat("%a, %d-%b"),
-      monthFormat = d3.timeFormat("%B"),
-      yearFormat = d3.timeFormat("%Y");
+    if (width < 0) width = 0;
+    if (height < 0) height = 0;
 
+    // Create root canvas grid element
+    let canvas = d3.select(el)
+      .append("div")
+      .attr("class", "grid-container")
+      .style("display", "inline-grid")
+      .style("grid-template-columns", "auto auto auto auto")
+      .style("grid-template-rows", "auto auto auto")
+      .style("padding", "5px")
+      .selectAll("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("style", "background-color:white")
+      .classed("svg-content", true);
 
-    let average = (array) => array.reduce((a, b) => a + b) / array.length;
+    // Create tooltip content div
+    let tooltip = d3.select(".tooltip");
+    if (tooltip.empty()) {
+      tooltip = d3.select("body")
+        .append("div")
+        .style("visibility", "hidden")
+        .attr("class", "tooltip")
+        .style("background-color", "#282b30")
+        .style("border", "solid")
+        .style("border-color", "#282b30")
+        .style("border-width", "2px")
+        .style("border-radius", "5px")
+        .style("width", width/12)
+        .style("color", "#F4F4F4")
+        .style("position", "absolute");
+    }
 
+    // Return the widget instance object
     return {
 
       renderValue: function (x) {
 
-        // Create color ramp profile using options
-        let colorMap = d3.scaleThreshold()
-          .domain(x.breaks)
-          .range(x.colors);
+        // Create array of day data objects for each sensor
+        const dayta = prepData(x);
 
-        // Load the data
-        const meta = HTMLWidgets.dataframeToD3(x.meta);
-        const data = HTMLWidgets.dataframeToD3(x.data);
+        // Draw the months within the data date domain
+        function drawMonths(data) {
 
-        // Index IDs using passed in index str
-        let indexIds = meta.map(d => { return d[x.index] });
+          d3.selectAll(".month-cell").remove();
 
-        // Remove old stuff first!
-        d3.select("#" + el.id).selectAll("svg").remove()
-
-        // Create canvas
-        let canvas = d3.select('#' + el.id)
-          .append("div")
-            .attr("class", "grid-container")
-            .style("display", "inline-grid")
-            .style("grid-template-columns", "auto auto auto auto")
-            .style("padding", "5px")
-          .selectAll("svg")
-          .attr("width", width)
-          .attr("height", height)
-          .attr("preserveAspectRatio", "xMinYMin meet")
-          .attr("style", "background-color:white")
-          .classed("svg-content", true);
-
-        let dailyData = indexIds.map(id => {
-          return {
-            id: id,
-            label: meta.filter(d => { return d[x.index] == id })[0][x.label],
-            community: meta.filter(d => { return d[x.index] == id })[0].community,
-            data: data.map(d => {
-              return {
-                date: format(new Date(d.datetime)),
-                value: +d[id],
-                color: colorMap(+d[id])
-              }
-            })
-          }
-        });
-
-        let dateDomain = data.map(d => { return d.datetime });
-        let sd = new Date(dateDomain.slice(1)[0]),
-            ed = new Date(dateDomain.slice(-1)[0]);
-
-        let selectedData = dailyData[0];
-
-                              // create a tooltip
-        let tooltip = d3.select("#" + el.id)
-          .append("svg")
-          .style("opacity", 0)
-          .attr("class", "tooltip")
-          .style("background-color", "#282b30")
-          .style("border", "solid")
-          .style("border-color", "#282b30")
-          .style("border-width", "2px")
-          .style("border-radius", "5px")
-          .style("padding", "5px")
-          .style("position", "absolute")
-          .style("z-index", 666)
-
-        let drawCalendar = function(dailyData) {
-
-        d3.select("#" + el.id).selectAll(".month-cell").remove();
-
-        // calc the months in date domain
-        months = d3.timeMonth.range(d3.timeMonth.floor(sd), ed);
-
-        // Add month svgs
-        let monthCell = canvas
-          .data(months)
-          .enter()
-          .append("svg")
-            .attr("class", "month-cell") // HMM
-            .attr("width", (cellSize * 7) + (cellMargin * 8) + 10)
-            .attr("height", d => {
-              let r = 8; //monthRows(d);
-              return (cellSize * r) + (cellMargin * (r + 1));
-            })
-            .append("g");
-
-        // add month labels
-        monthCell.append("text")
-          .attr("class", "month-label")
-          .attr("x", ((cellSize * 7) + cellMargin * 8) / 2)
-          .attr("y", 12)
-          .attr("text-anchor", "middle")
-          .attr("font-family", "sans-serif")
-          .text(d => {
-            return monthFormat(d)
-          });
-
-          // Add date-text
-          monthCell.selectAll("rect.day")
-          .data((d, i) => {
-            return d3.timeDays(d, new Date(d.getFullYear(), d.getMonth() + 1, 1));
-          })
-          .enter()
-          .append("text")
-            .attr("class", "day-text")
-            .attr("text-anchor","middle")
-            .attr("font-family", "sans-serif")
-            .attr("font-size", "1em")
-            .style("stroke", "black")
-            .style("stroke-width", "0.02em")
-            .attr("width", cellSize)
-            .attr("height", cellSize)
-            .attr("x", d => {
-              let n = dayFormat(d);
-              return ( ( n * cellSize ) + ( n * cellMargin ) + cellSize/2 + cellMargin)
-            })
-            .attr("y", d => {
-              let firstDay = new Date(d.getFullYear(), d.getMonth(), 1)
-              let n = weekFormat(d) - weekFormat(firstDay)
-              return ( ( n * cellSize ) + ( n  * cellMargin )  +  cellSize + cellSize  - cellSize/4)
-            })
-            .text(d => { return d3.timeFormat("%e")(d) })
-
-        // add day rects
-        let dayCell = monthCell.selectAll("rect.day")
-          .data((d, i) => {
-            return d3.timeDays(d, new Date(d.getFullYear(), d.getMonth() + 1, 1));
-          })
-          .enter()
-          .append("rect")
-            .attr("class", "day-fill")
-            .attr("width", cellSize)
-            .attr("height", cellSize)
-            .attr("rx", 3).attr("ry", 3) // round corners
-            .attr("fill", (d, i) => {
-              let col = selectedData.data.filter(h => { return h.date == format(d) })[0];
-              if (typeof col !== 'undefined') {
-                return col.color
-              } else {
-                return "#eaeaea"
-              }
-            })
-            .style("opacity", 0.8)
-            .attr("x", d => {
-              return (dayFormat(d) * cellSize + (dayFormat(d) * cellMargin) + cellMargin);
-            })
-            .attr("y", d => {
-              let firstDay = new Date(d.getFullYear(), d.getMonth(), 1)
-              return ((weekFormat(d) - weekFormat(firstDay)) * cellSize) +
-                ((weekFormat(d) - weekFormat(firstDay)) * cellMargin) + cellMargin + 30
+          // Create svg for each month of data
+          months = d3.timeMonth.range(d3.timeMonth.floor(data.domain.sd), data.domain.ed);
+          let svg = canvas
+            .data(months)
+            .enter()
+            .append("svg")
+            .attr("class", "month-cell")
+            .attr("width", width*0.25) //(cellSize * 7) + (cellMargin * 8) + cellSize)
+            .attr("height", () => {
+              let rows = 8;
+              return (cellSize * rows) + (cellMargin * (rows + 1));
             });
 
-
-
-          // Weekday text below title
-          let weekDayText = monthCell.selectAll("rect.day")
-          .data((d, i) => {
-            return d3.timeDays(d, new Date(d.getFullYear(), d.getMonth() + 1, 1));
-          })
-          .enter()
-          .append("text")
-            .attr("class", "weekday-text")
-            .attr("text-anchor","middle")
+          // Add the title of each svg month
+          svg
+            .append("text")
+            .attr("class", "month-label")
+            .attr("x", ((cellSize * 7) + cellMargin * 8) / 2)
+            .attr("y", "1em")
+            .attr("text-anchor", "middle")
             .attr("font-family", "sans-serif")
-            .attr("font-size", "0.6em")
+            .attr("font-size", cellSize*0.5)
+            .text(d => {
+              return d3.timeFormat("%B")(d)
+            });
+
+          // Add the g layer to each day to append rect and text to
+          svg
+            .selectAll("g.day")
+            .data((d, i) => {
+              return d3.timeDays(d, new Date(d.getFullYear(), d.getMonth() + 1, 1));
+            })
+            .enter()
+            .append("g")
+            .attr("class", "day")
+
+          // Add the default color fill
+           svg
+            .selectAll("g.day")
+            .append("rect")
+              .attr("class", "day-fill")
+              .attr("width", cellSize)
+              .attr("height", cellSize)
+              .attr("rx", 3).attr("ry", 3) // round corners
+              .attr("fill", "#F4F4F4") // Default colors
+              .style("opacity", 0.95)
+              .attr("x", d => {
+                let n = d3.timeFormat("%w")(d);
+                return ((n * cellSize) + (n * cellMargin) + cellSize / 2 + cellMargin)
+              })
+              .attr("y", d => {
+                let firstDay = new Date(d.getFullYear(), d.getMonth(), 1)
+                return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellSize) +
+                  ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellMargin) + cellMargin + cellSize
+              });
+
+          // Add the day text to each cell
+          svg
+            .selectAll("g.day")
+            .append("text")
+              .attr("class", "day-text")
+              .attr("text-anchor", "middle")
+              .attr("font-family", "sans-serif")
+              .attr("font-size", cellSize*0.45)
+              .style("opacity", 0.75)
+              .text(d => {
+                return d3.timeFormat("%e")(d)
+              })
+              .attr("x", d => {
+                let n = d3.timeFormat("%w")(d);
+                return ((n * cellSize) + (n * cellMargin) + cellSize + cellMargin)
+              })
+              .attr("y", d => {
+                let firstDay = new Date(d.getFullYear(), d.getMonth(), 1)
+                return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellSize) +
+                  ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellMargin) + cellMargin + cellSize + (cellSize/2 + cellSize*0.45/2)
+              });
+
+          // Add the weekday text below title (mon, tues, etc)
+          svg
+            .selectAll("g.rect.day")
+            .data((d, i) => {
+              return d3.timeDays(d, new Date(d.getFullYear(), d.getMonth() + 1, 1));
+            })
+            .enter()
+            .append("text")
+            .attr("class", "weekday-text")
+            .attr("text-anchor", "middle")
+            .attr("font-family", "sans-serif")
+            .attr("font-size", cellSize*0.33)
             .attr("width", cellSize)
             .attr("height", cellSize)
             .attr("x", (d, i) => {
-              if ( i < 7 ) {
-                let n = dayFormat(d);
-                return ( ( n * cellSize ) + ( n * cellMargin ) + cellSize/2 + cellMargin)
+              if (i < 7) {
+                let n = d3.timeFormat("%w")(d);
+                return ((n * cellSize) + (n * cellMargin) + cellSize + cellMargin)
               }
             })
-            .attr("y", 30 - cellMargin)
-            .text((d,i) => {
-              if ( i < 7 ) {
+            .attr("y", cellSize)
+            .text((d, i) => {
+              if (i < 7) {
                 return d3.timeFormat("%a")(d)
               }
-            })
-
-          // Add mouseover highlighting
-          function cellMouseOver(d) {
-            tooltip.selectAll("text").remove()
-            console.log([d3.event.pageX, d3.event.pageY])
-            d3.select(d3.event.target)
-              .style("stroke", "red")
-            tooltip
-              .style("width", "75px")
-              .style("height", "2.5em")
-              .transition()
-              .duration(130)
-              .style("opacity", 0.75)
-              .style("transform", `translate3d(${d3.event.pageX- width - 36}px, ${d3.event.pageY - 36}px, 0px)`)
-            tooltip
-            .append("text")
-            .text(() => {
-              let s = selectedData.data.filter(h => { return h.date == format(d) })[0];
-              return `${s.value}`
-
-            })
-            .style("fill", "white")
-            .style("font-size", "1em")
-            .attr("x", "0em")
-            .attr("y", "1em")
-              }
-
-              // d3.event.pageX, d3.event.pageY
-
-          function cellMouseOut(d) {
-            d3.select(d3.event.target)
-              .transition()
-              .duration(150)
-              .style("stroke", "transparent");
-
-            tooltip
-              .transition()
-              .delay(100)
-              .style("opacity", 0)
-          }
-
-
-          dayCell
-            .on("mouseover", cellMouseOver)
-            .on("mouseout", cellMouseOut)
-
+            });
         };
+
+        // Draw the date color fill on the calendar days using passed in data
+        function drawDateFill(data) {
+
+          // Make the day cell tooltip/highlight
+          d3.selectAll("g.day")
+            .on("mouseover", d => {
+            tooltip
+                .style("visibility", "visible")
+                .style("transform", `translate(${d3.event.pageX}px, ${d3.event.pageY}px)`)
+                .text(() => {
+                  let cell = (data.data.filter(h => {
+                    return d3.timeFormat("%Y-%m-%d")(new Date(h.date)) == d3.timeFormat("%Y-%m-%d")(d)
+                  }))[0];
+                  return d3.timeFormat("%B %d, %Y")(d) + ": " + cell.value.toFixed(1) + " \u00B5g/m\u00B3";
+                })
+                .style("text-anchor", "middle")
+                .style("font-family", "sans-serif")
+                .style("font-size", "0.7em");
+
+            d3.select(this.event.target.parentNode)
+              .select("rect.day-fill")
+              .style("stroke", "#2D2926")
+          })
+          .on("mouseout", d => {
+            d3.select(this.event.target.parentNode)
+              .select("rect.day-fill")
+              .style("stroke", "transparent")
+              tooltip
+                .style("visibility", "hidden")
+                .text("") // Erase the text on mouse out
+            });
+
+          // Fill colors
+          d3.selectAll("rect.day-fill")
+            .transition()
+            .duration(500)
+            .attr("fill", (d, i) => {
+              let col = data.data.filter(h => {
+                return h.date == d3.timeFormat("%Y-%m-%d")(d)
+              })[0];
+              if (typeof col !== 'undefined') {
+                return col.color
+              } else {
+                return "#F4F4F4"
+              }
+            })
+;
+        };
+
+        function init(data) {
+          drawMonths(data)
+          drawDateFill(data)
+        };
+
+        init(dayta[0]);
 
         // Allow shiny updating
-        if( x.inputId != null ) {
+        if (x.inputId != null) {
           let selectedLabel;
-          $("#" + x.inputId).on("change", function() {
-            selectedLabel = this.value;
-            selectedData = dailyData.filter(d => {
-              return d.label == selectedLabel
+          $("#" + x.inputId).on("change", function () {
+            label = this.value;
+            data = dayta.filter(d => {
+              return d.label == label
             })[0]
-            drawCalendar(selectedData);
+            drawDateFill(data);
           });
         };
-
-        drawCalendar(selectedData);
 
       },
 
       resize: function (width, height) {
-
 
       }
 
