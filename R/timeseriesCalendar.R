@@ -61,7 +61,7 @@ timeseriesCalendar <- function(
   dailyData <- .daily_aggregate(data)
 
   if ( full ) {
-    dailyData <- dplyr::full_join(dplyr::tibble("datetime" = seq(lubridate::ymd_h(strftime(dailyData$datetime[1], "%Y010100")), lubridate::ymd_h(strftime(dailyData$datetime[nrow(dailyData)], "%Y123100")), by = "day")), dailyData, "datetime")
+    dailyData <- dplyr::full_join(dplyr::tibble("datetime" = seq(lubridate::ymd_h(strftime(dailyData$datetime[1], "%Y010101")), lubridate::ymd_h(strftime(dailyData$datetime[nrow(dailyData)], "%Y123101")), by = "day")), dailyData, "datetime")
   }
 
   # Create data list

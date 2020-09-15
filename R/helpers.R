@@ -78,7 +78,7 @@
     lapply(
       X = df_bins,
       # Select first datetime index in bin to use as aggregated datetime axis
-      FUN = function(x) lubridate::floor_date(zoo::index(x)[1], unit = lubridateBreakUnit) ## First # [nrow(x)] ## Last
+      FUN = function(x) lubridate::floor_date(zoo::index(x)[1], unit = lubridateBreakUnit) + lubridate::hours(1)## First # [nrow(x)] ## Last
     )
   )
   # Convert saved datetime vector back to POSIX* from int

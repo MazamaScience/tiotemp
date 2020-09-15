@@ -9,45 +9,29 @@ HTMLWidgets.widget({
 
 
     let cellMargin = 2,
-      cellSize = width/(28 + 2*cellMargin ); // 28 days per row and padding
+      cellSize = width / (29 + 2 * cellMargin); // 29 days per row and padding
 
     function prepData(X) {
 
       // Remap the colors
-      const colorMap = function(value) {
-        if ( value === null ) {
+      const colorMap = function (value) {
+        if (value === null) {
           return "#F4F4F4"
         } else {
           return d3.scaleThreshold()
-                   .domain(X.breaks)
-                   .range(X.colors)(value);
+            .domain(X.breaks)
+            .range(X.colors)(value);
         }
       };
 
       // Remap the values
-      const valueMap = function(value) {
-        if ( value === 0 ) {
+      const valueMap = function (value) {
+        if (value === 0) {
           return undefined
         } else {
           return value
         }
-      }
-      // https://stackoverflow.com/a/53652131
-      function changeTz(date, ianatz = 'UTC') {
-
-        // suppose the date is 12:00 UTC
-        var invdate = new Date(date.toLocaleString('en-US', {
-          timeZone: ianatz
-        }));
-
-        // then invdate will be 07:00 in Toronto
-        // and the diff is 5 hours
-        var diff = date.getTime() - invdate.getTime();
-
-        // so 12:00 in Toronto is 17:00 UTC
-        return new Date(date.getTime() + diff);
-
-    }
+      };
 
       // Load the data
       const meta = HTMLWidgets.dataframeToD3(X.meta);
@@ -67,7 +51,9 @@ HTMLWidgets.widget({
       const dailyData = indexIds.map(id => {
         return {
           id: id,
-          label: meta.filter(d => { return d[X.index] == id })[0][X.label],
+          label: meta.filter(d => {
+            return d[X.index] == id
+          })[0][X.label],
           data: data.map(d => {
             return {
               date: d3.timeFormat("%Y-%m-%d")(d3.timeParse("%Y-%m-%dT%H:%M:%SZ")(d.datetime)),
@@ -81,8 +67,6 @@ HTMLWidgets.widget({
           }
         }
       });
-
-      console.log(dailyData)
       return dailyData
 
     };
@@ -94,7 +78,7 @@ HTMLWidgets.widget({
     let canvas = d3.select(el)
       .append("div")
       .attr("class", "grid-container")
-      .style("display", "inline-grid")
+      .style("display", "grid")
       .style("grid-template-columns", "auto auto auto auto")
       .style("grid-template-rows", "auto auto auto")
       .style("padding", "5px")
@@ -116,7 +100,7 @@ HTMLWidgets.widget({
         .style("border-color", "#282b30")
         .style("border-width", "2px")
         .style("border-radius", "5px")
-        .style("width", width/12)
+        .style("width", width / 12)
         .style("color", "#F4F4F4")
         .style("position", "absolute");
     }
@@ -136,12 +120,16 @@ HTMLWidgets.widget({
 
           // Create svg for each month of data
           months = d3.timeMonth.range(d3.timeMonth.floor(data.domain.sd), data.domain.ed);
+          let elem = document.querySelector("div#" + el.id);
+          let view = elem.getBoundingClientRect()
+
+
           let svg = canvas
             .data(months)
             .enter()
             .append("svg")
             .attr("class", "month-cell")
-            .attr("width", width*0.25) //(cellSize * 7) + (cellMargin * 8) + cellSize)
+            .attr("width", view.width / 4) //(cellSize * 7) + (cellMargin * 8) + cellSize)
             .attr("height", () => {
               let rows = 8;
               return (cellSize * rows) + (cellMargin * (rows + 1));
@@ -155,7 +143,7 @@ HTMLWidgets.widget({
             .attr("y", "1em")
             .attr("text-anchor", "middle")
             .attr("font-family", "sans-serif")
-            .attr("font-size", cellSize*0.5)
+            .attr("font-size", cellSize * 0.5)
             .text(d => {
               return d3.timeFormat("%B")(d)
             });
@@ -171,46 +159,46 @@ HTMLWidgets.widget({
             .attr("class", "day")
 
           // Add the default color fill
-           svg
+          svg
             .selectAll("g.day")
             .append("rect")
-              .attr("class", "day-fill")
-              .attr("width", cellSize)
-              .attr("height", cellSize)
-              .attr("rx", 3).attr("ry", 3) // round corners
-              .attr("fill", "#F4F4F4") // Default colors
-              .style("opacity", 0.95)
-              .attr("x", d => {
-                let n = d3.timeFormat("%w")(d);
-                return ((n * cellSize) + (n * cellMargin) + cellSize / 2 + cellMargin)
-              })
-              .attr("y", d => {
-                let firstDay = new Date(d.getFullYear(), d.getMonth(), 1)
-                return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellSize) +
-                  ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellMargin) + cellMargin + cellSize
-              });
+            .attr("class", "day-fill")
+            .attr("width", cellSize)
+            .attr("height", cellSize)
+            .attr("rx", 3).attr("ry", 3) // round corners
+            .attr("fill", "#F4F4F4") // Default colors
+            .style("opacity", 0.95)
+            .attr("x", d => {
+              let n = d3.timeFormat("%w")(d);
+              return ((n * cellSize) + (n * cellMargin) + cellSize / 2 + cellMargin)
+            })
+            .attr("y", d => {
+              let firstDay = new Date(d.getFullYear(), d.getMonth(), 1)
+              return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellSize) +
+                ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellMargin) + cellMargin + cellSize
+            });
 
           // Add the day text to each cell
           svg
             .selectAll("g.day")
             .append("text")
-              .attr("class", "day-text")
-              .attr("text-anchor", "middle")
-              .attr("font-family", "sans-serif")
-              .attr("font-size", cellSize*0.45)
-              .style("opacity", 0.75)
-              .text(d => {
-                return d3.timeFormat("%e")(d)
-              })
-              .attr("x", d => {
-                let n = d3.timeFormat("%w")(d);
-                return ((n * cellSize) + (n * cellMargin) + cellSize + cellMargin)
-              })
-              .attr("y", d => {
-                let firstDay = new Date(d.getFullYear(), d.getMonth(), 1)
-                return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellSize) +
-                  ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellMargin) + cellMargin + cellSize + (cellSize/2 + cellSize*0.45/2)
-              });
+            .attr("class", "day-text")
+            .attr("text-anchor", "middle")
+            .attr("font-family", "sans-serif")
+            .attr("font-size", cellSize * 0.45)
+            .style("opacity", 0.75)
+            .text(d => {
+              return d3.timeFormat("%e")(d)
+            })
+            .attr("x", d => {
+              let n = d3.timeFormat("%w")(d);
+              return ((n * cellSize) + (n * cellMargin) + cellSize + cellMargin)
+            })
+            .attr("y", d => {
+              let firstDay = new Date(d.getFullYear(), d.getMonth(), 1)
+              return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellSize) +
+                ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellMargin) + cellMargin + cellSize + (cellSize / 2 + cellSize * 0.45 / 2)
+            });
 
           // Add the weekday text below title (mon, tues, etc)
           svg
@@ -223,7 +211,7 @@ HTMLWidgets.widget({
             .attr("class", "weekday-text")
             .attr("text-anchor", "middle")
             .attr("font-family", "sans-serif")
-            .attr("font-size", cellSize*0.33)
+            .attr("font-size", cellSize * 0.33)
             .attr("width", cellSize)
             .attr("height", cellSize)
             .attr("x", (d, i) => {
@@ -241,35 +229,39 @@ HTMLWidgets.widget({
         };
 
         // Draw the date color fill on the calendar days using passed in data
-        function drawDateFill(data) {
+        function drawDateColor(data) {
 
           // Make the day cell tooltip/highlight
           d3.selectAll("g.day")
             .on("mouseover", d => {
-            tooltip
+              tooltip
                 .style("visibility", "visible")
-                .style("transform", () => {
-                  return `translate(${d3.event.pageX}px, ${d3.event.pageY}px)`
-                  //`translate(${d3.event.pageX}px, ${d3.event.pageY - height}px)`
-                })
+                .style('left', `${event.pageX + 10}px`)
+                .style('top', `${event.pageY + 10}px`)
                 .text(() => {
                   let cell = (data.data.filter(h => {
                     return h.date == d3.timeFormat("%Y-%m-%d")(d)
                   }))[0];
-                  return d3.timeFormat("%B %d, %Y")(d) + ": " + cell.value.toFixed(1) + " \u00B5g/m\u00B3";
+                  if (cell.value != undefined) {
+                    return d3.timeFormat("%B %d, %Y")(d) + ": " + cell.value.toFixed(1) + " \u00B5g/m\u00B3";
+                  } else {
+                    return d3.timeFormat("%B %d, %Y")(d) + "";
+                  }
+
                 })
                 .style("text-anchor", "middle")
                 .style("font-family", "sans-serif")
                 .style("font-size", "0.7em");
 
-            d3.select(this.event.target.parentNode)
-              .select("rect.day-fill")
-              .style("stroke", "#2D2926")
-          })
-          .on("mouseout", d => {
-            d3.select(this.event.target.parentNode)
-              .select("rect.day-fill")
-              .style("stroke", "transparent")
+              d3.select(this.event.target.parentNode)
+                .select("rect.day-fill")
+                .style("stroke", "#2D2926")
+                .style("stroke-width", cellMargin)
+            })
+            .on("mouseout", d => {
+              d3.select(this.event.target.parentNode)
+                .select("rect.day-fill")
+                .style("stroke", "transparent")
               tooltip
                 .style("visibility", "hidden")
                 .text("") // Erase the text on mouse out
@@ -288,13 +280,12 @@ HTMLWidgets.widget({
               } else {
                 return "#F4F4F4"
               }
-            })
-;
+            });
         };
 
         function init(data) {
           drawMonths(data)
-          drawDateFill(data)
+          drawDateColor(data)
         };
 
         init(dayta[0]);
@@ -307,7 +298,7 @@ HTMLWidgets.widget({
             data = dayta.filter(d => {
               return d.label == label
             })[0]
-            drawDateFill(data);
+            drawDateColor(data);
           });
         };
 
