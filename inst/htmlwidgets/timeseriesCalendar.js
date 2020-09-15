@@ -70,7 +70,7 @@ HTMLWidgets.widget({
           label: meta.filter(d => { return d[X.index] == id })[0][X.label],
           data: data.map(d => {
             return {
-              date: d3.timeFormat("%Y-%m-%d")(new Date(d.datetime)),
+              date: d3.timeFormat("%Y-%m-%d")(d3.timeParse("%Y-%m-%dT%H:%M:%SZ")(d.datetime)),
               value: valueMap(+d[id]),
               color: colorMap(+d[id])
             }
@@ -82,6 +82,7 @@ HTMLWidgets.widget({
         }
       });
 
+      console.log(dailyData)
       return dailyData
 
     };
@@ -104,12 +105,12 @@ HTMLWidgets.widget({
       .classed("svg-content", true);
 
     // Create tooltip content div
-    let tooltip = d3.select(".tooltip");
+    let tooltip = d3.select(".tooltip-calendar");
     if (tooltip.empty()) {
       tooltip = d3.select("body")
         .append("div")
         .style("visibility", "hidden")
-        .attr("class", "tooltip")
+        .attr("class", "tooltip-calendar")
         .style("background-color", "#282b30")
         .style("border", "solid")
         .style("border-color", "#282b30")
@@ -247,10 +248,13 @@ HTMLWidgets.widget({
             .on("mouseover", d => {
             tooltip
                 .style("visibility", "visible")
-                .style("transform", `translate(${d3.event.pageX}px, ${d3.event.pageY}px)`)
+                .style("transform", () => {
+                  return `translate(${d3.event.pageX}px, ${d3.event.pageY}px)`
+                  //`translate(${d3.event.pageX}px, ${d3.event.pageY - height}px)`
+                })
                 .text(() => {
                   let cell = (data.data.filter(h => {
-                    return d3.timeFormat("%Y-%m-%d")(new Date(h.date)) == d3.timeFormat("%Y-%m-%d")(d)
+                    return h.date == d3.timeFormat("%Y-%m-%d")(d)
                   }))[0];
                   return d3.timeFormat("%B %d, %Y")(d) + ": " + cell.value.toFixed(1) + " \u00B5g/m\u00B3";
                 })
