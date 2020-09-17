@@ -17,89 +17,10 @@ HTMLWidgets.widget({
         maxZoom: 18,
       }).addTo(map)
 
-
-    // Calc the center coords from meta
-    function getCenter(X) {
-
-      const meta = HTMLWidgets.dataframeToD3(X.meta);
-
-      let average = (array) => array.reduce((a, b) => a + b) / array.length;
-
-      // Get center cords from meta and set the view to center
-      centerLat = average(meta.map(d => { return d.latitude }));
-      centerLon = average(meta.map(d => { return d.longitude }));
-
-      return {Lat: centerLat, Lon: centerLon}
-
-    };
-
-    // Prep data function: creates point data for mapping, fill color, etc.
-    function prepData(X) {
-
-      // Remap the colors
-      const colorMap = function (value) {
-        if (value === null) {
-          return "#F4F4F4"
-        } else {
-          return d3.scaleThreshold()
-            .domain(X.breaks)
-            .range(X.colors)(value);
-        }
-      };
-
-      // Remap the values
-      const valueMap = function (value) {
-        if (value === 0) {
-          return undefined
-        } else {
-          return value
-        }
-      };
-
-      // Convert data to d3 json
-      const meta = HTMLWidgets.dataframeToD3(X.meta);
-      const data = HTMLWidgets.dataframeToD3(X.data);
-
-      // Useful date domain
-      const dateDomain = data.map(d => { return d.datetime });
-      const sd = new Date(dateDomain.slice(1)[0]),
-            ed = new Date(dateDomain.slice(-1)[0]);
-
-
-      // Index ID using passed in index string
-      const indexIds = meta.map(d => { return d[X.index] });
-
-      // Add a LatLng object for leaflet to the metadata object
-      meta.forEach(d => {
-        d.LatLng = new L.LatLng(d.latitude, d.longitude)
-      });
-
-      const pointData = indexIds.map(id => {
-        return {
-          id: id,
-          label: meta.filter(d => { return d[X.index] == id })[0][X.label],
-          LatLng: meta.filter(d => { return d[X.index] == id })[0].LatLng,
-          data: data.map(d => {
-            return {
-              date: new Date(d.datetime),
-              value: valueMap(+d[id]),
-              color: colorMap(+d[id])
-            }
-          }),
-          domain: {
-            sd,
-            ed
-          }
-        }
-      });
-
-      return pointData;
-
-    };
-
-
     return {
       renderValue: function (x) {
+
+        /* Create the map features */
 
         // Center the map to the point loc average
         const center = getCenter(x);
@@ -107,6 +28,22 @@ HTMLWidgets.widget({
 
         // Prepare the point data
         const data = prepData(x);
+
+        let tooltip = d3.select(".tooltip-calendar");
+        if (tooltip.empty()) {
+          tooltip = d3.select("body")
+            .append("div")
+            .style("visibility", "hidden")
+            .attr("class", "tooltip-calendar")
+            .style("background-color", "#282b30")
+            .style("border", "solid")
+            .style("border-color", "#282b30")
+            .style("border-width", "2px")
+            .style("border-radius", "5px")
+            .style("width", width / 12)
+            .style("color", "#F4F4F4")
+            .style("position", "absolute");
+        }
 
         // Add an svg layer to the leaflet pane
         L.svg().addTo(map)
@@ -144,11 +81,16 @@ HTMLWidgets.widget({
               .attr("cy", d => { return map.latLngToLayerPoint(d.LatLng).y })
           })
 
-          // the x scale of the canvas
+          // Create two scales; the x scale of the canvas itself,
+          // and the x date scale of the data for mapping datetimes to index
           const xScale = d3.scaleTime()
-          .domain([data[0].domain.sd, data[0].domain.ed])
-          .rangeRound([ width*0.25, width*0.75 ])
-          .clamp(true);
+            .domain([data[0].domain.sd, data[0].domain.ed])
+            .rangeRound([ width*0.25, width*0.75 ])
+            .clamp(true),
+            dateScale = d3.scaleTime()
+            .domain([data[0].domain.sd, data[0].domain.ed])
+            .rangeRound([0, data.length])
+            .clamp(true);
 
           // Draw the startdate fill
           fillPoints(data[0].domain.sd);
@@ -286,11 +228,92 @@ HTMLWidgets.widget({
               .style("opacity", 1)
             });
 
+
+            /* Helper Functions */
+
+            // Calc the center coords from meta
+            function getCenter(X) {
+
+              const meta = HTMLWidgets.dataframeToD3(X.meta);
+
+              let average = (array) => array.reduce((a, b) => a + b) / array.length;
+
+              // Get center cords from meta and set the view to center
+              centerLat = average(meta.map(d => { return d.latitude }));
+              centerLon = average(meta.map(d => { return d.longitude }));
+
+              return {Lat: centerLat, Lon: centerLon}
+
+            };
+
+            // Prep data function: creates point data for mapping, fill color, etc.
+            function prepData(X) {
+
+              // Remap the colors
+              const colorMap = function (value) {
+                if (value === null) {
+                  return "#F4F4F4"
+                } else {
+                  return d3.scaleThreshold()
+                    .domain(X.breaks)
+                    .range(X.colors)(value);
+                }
+              };
+
+              // Remap the values
+              const valueMap = function (value) {
+                if (value === 0) {
+                  return undefined
+                } else {
+                  return value
+                }
+              };
+
+              // Convert data to d3 json
+              const meta = HTMLWidgets.dataframeToD3(X.meta);
+              const data = HTMLWidgets.dataframeToD3(X.data);
+
+              // Useful date domain
+              const dateDomain = data.map(d => { return d.datetime });
+              const sd = new Date(dateDomain.slice(1)[0]),
+                    ed = new Date(dateDomain.slice(-1)[0]);
+
+
+              // Index ID using passed in index string
+              const indexIds = meta.map(d => { return d[X.index] });
+
+              // Add a LatLng object for leaflet to the metadata object
+              meta.forEach(d => {
+                d.LatLng = new L.LatLng(d.latitude, d.longitude)
+              });
+
+              // Fancy data mapping
+              const pointData = indexIds.map(id => {
+                return {
+                  id: id,
+                  label: meta.filter(d => { return d[X.index] == id })[0][X.label],
+                  LatLng: meta.filter(d => { return d[X.index] == id })[0].LatLng,
+                  data: data.map(d => {
+                    return {
+                      date: new Date(d.datetime),
+                      value: valueMap(+d[id]),
+                      color: colorMap(+d[id])
+                    }
+                  }),
+                  domain: {
+                    sd,
+                    ed
+                  }
+                }
+              });
+
+              return pointData;
+
+            };
+
             // Pause
             function pause() {
-
               clearInterval(timer)
-
             };
 
             // Play
@@ -309,6 +332,7 @@ HTMLWidgets.widget({
                 fillPoints(sliderDate);
               };
 
+              // Set timer interval to step ^ every 250 ms
               timer = setInterval(step, 250);
 
             };
@@ -319,17 +343,25 @@ HTMLWidgets.widget({
             function roundDate(date) {
               date.setMinutes(date.getMinutes() + 30);
               date.setMinutes(0);
+              date.setSeconds(0);
               return date;
             };
 
-            let pos = xScale(roundDate(date))
+            let pos = dateScale(roundDate(date))
             let dateIndex = (pos < 0 ? 0 : pos) | 0;
-            d3.selectAll(".point").style("fill", (d, i) => {
-              if ( typeof d.data[dateIndex] !== 'undefined' ) {
-                return d.data[dateIndex].color
-              }
-            })
+            d3.selectAll(".point")
+              .transition()
+              .duration(25)
+              .style("fill", (d, i) => {
+                if ( typeof d.data[dateIndex] != undefined ) {
+                  if ( d.data[dateIndex].value != undefined) {
+                    return d.data[dateIndex].color
+                  } else {
+                    return "#9a9a9a" // grey if no value for time
+                  }
 
+                }
+            })
           };
 
         },
