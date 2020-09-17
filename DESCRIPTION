@@ -1,6 +1,6 @@
 Package: tiotemp
 Title: Spatiotemporal Visualizations
-Version: 0.2.3
+Version: 0.2.4
 Authors@R: c(
     person(given = "Hans",
            family = "Martin",
@@ -23,6 +23,8 @@ Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
+Depends:
+    R (>= 3.5.0)
 Imports: 
     crosstalk, 
     dplyr,
@@ -33,3 +35,4 @@ Imports:
     stringr,
     xts, 
     zoo
+

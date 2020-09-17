@@ -16,7 +16,7 @@ HTMLWidgets.widget({
       // Remap the colors
       const colorMap = function (value) {
         if (value === null) {
-          return "#F4F4F4"
+          return "#F4F4F4";
         } else {
           return d3.scaleThreshold()
             .domain(X.breaks)
@@ -27,9 +27,9 @@ HTMLWidgets.widget({
       // Remap the values
       const valueMap = function (value) {
         if (value === 0) {
-          return undefined
+          return undefined;
         } else {
-          return value
+          return value;
         }
       };
 
@@ -38,38 +38,38 @@ HTMLWidgets.widget({
       const data = HTMLWidgets.dataframeToD3(X.data);
 
       let dateDomain = data.map(d => {
-        return d.datetime
+        return d.datetime;
       });
       let sd = new Date(dateDomain.slice(1)[0]),
         ed = new Date(dateDomain.slice(-1)[0]);
 
       // Index IDs using passed in index str
       const indexIds = meta.map(d => {
-        return d[X.index]
+        return d[X.index];
       });
 
       const dailyData = indexIds.map(id => {
         return {
           id: id,
           label: meta.filter(d => {
-            return d[X.index] == id
+            return d[X.index] == id;
           })[0][X.label],
           data: data.map(d => {
             return {
               date: d3.timeFormat("%Y-%m-%d")(d3.timeParse("%Y-%m-%dT%H:%M:%SZ")(d.datetime)),
               value: valueMap(+d[id]),
               color: colorMap(+d[id])
-            }
+            };
           }),
           domain: {
             sd,
             ed
           }
-        }
+        };
       });
-      return dailyData
+      return dailyData;
 
-    };
+    }
 
     if (width < 0) width = 0;
     if (height < 0) height = 0;
@@ -121,7 +121,7 @@ HTMLWidgets.widget({
           // Create svg for each month of data
           months = d3.timeMonth.range(d3.timeMonth.floor(data.domain.sd), data.domain.ed);
           let elem = document.querySelector("div#" + el.id);
-          let view = elem.getBoundingClientRect()
+          let view = elem.getBoundingClientRect();
 
 
           let svg = canvas
@@ -145,7 +145,7 @@ HTMLWidgets.widget({
             .attr("font-family", "sans-serif")
             .attr("font-size", cellSize * 0.5)
             .text(d => {
-              return d3.timeFormat("%B")(d)
+              return d3.timeFormat("%B")(d);
             });
 
           // Add the g layer to each day to append rect and text to
@@ -156,7 +156,7 @@ HTMLWidgets.widget({
             })
             .enter()
             .append("g")
-            .attr("class", "day")
+            .attr("class", "day");
 
           // Add the default color fill
           svg
@@ -170,12 +170,12 @@ HTMLWidgets.widget({
             .style("opacity", 0.95)
             .attr("x", d => {
               let n = d3.timeFormat("%w")(d);
-              return ((n * cellSize) + (n * cellMargin) + cellSize / 2 + cellMargin)
+              return ((n * cellSize) + (n * cellMargin) + cellSize / 2 + cellMargin);
             })
             .attr("y", d => {
-              let firstDay = new Date(d.getFullYear(), d.getMonth(), 1)
+              let firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
               return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellSize) +
-                ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellMargin) + cellMargin + cellSize
+                ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellMargin) + cellMargin + cellSize;
             });
 
           // Add the day text to each cell
@@ -188,16 +188,16 @@ HTMLWidgets.widget({
             .attr("font-size", cellSize * 0.45)
             .style("opacity", 0.75)
             .text(d => {
-              return d3.timeFormat("%e")(d)
+              return d3.timeFormat("%e")(d);
             })
             .attr("x", d => {
               let n = d3.timeFormat("%w")(d);
-              return ((n * cellSize) + (n * cellMargin) + cellSize + cellMargin)
+              return ((n * cellSize) + (n * cellMargin) + cellSize + cellMargin);
             })
             .attr("y", d => {
-              let firstDay = new Date(d.getFullYear(), d.getMonth(), 1)
+              let firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
               return ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellSize) +
-                ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellMargin) + cellMargin + cellSize + (cellSize / 2 + cellSize * 0.45 / 2)
+                ((d3.timeFormat("%U")(d) - d3.timeFormat("%U")(firstDay)) * cellMargin) + cellMargin + cellSize + (cellSize / 2 + cellSize * 0.45 / 2);
             });
 
           // Add the weekday text below title (mon, tues, etc)
@@ -217,16 +217,16 @@ HTMLWidgets.widget({
             .attr("x", (d, i) => {
               if (i < 7) {
                 let n = d3.timeFormat("%w")(d);
-                return ((n * cellSize) + (n * cellMargin) + cellSize + cellMargin)
+                return ((n * cellSize) + (n * cellMargin) + cellSize + cellMargin);
               }
             })
             .attr("y", cellSize)
             .text((d, i) => {
               if (i < 7) {
-                return d3.timeFormat("%a")(d)
+                return d3.timeFormat("%a")(d);
               }
             });
-        };
+        }
 
         // Draw the date color fill on the calendar days using passed in data
         function drawDateColor(data) {
@@ -240,12 +240,14 @@ HTMLWidgets.widget({
                 .style('top', `${event.pageY + 10}px`)
                 .text(() => {
                   let cell = (data.data.filter(h => {
-                    return h.date == d3.timeFormat("%Y-%m-%d")(d)
+                    return h.date == d3.timeFormat("%Y-%m-%d")(d);
                   }))[0];
-                  if (cell.value != undefined) {
-                    return d3.timeFormat("%B %d, %Y")(d) + ": " + cell.value.toFixed(1) + " \u00B5g/m\u00B3";
+                  if (cell.value !== undefined) {
+                    // // //return d3.timeFormat("%B %d, %Y")(d) + ": " + cell.value.toFixed(1) + " \u00B5g/m\u00B3";
+                    return cell.value.toFixed(1) + x.unitString;
                   } else {
-                    return d3.timeFormat("%B %d, %Y")(d) + "";
+                    // // //return d3.timeFormat("%B %d, %Y")(d) + "";
+                    return "NA";
                   }
 
                 })
@@ -256,15 +258,15 @@ HTMLWidgets.widget({
               d3.select(this.event.target.parentNode)
                 .select("rect.day-fill")
                 .style("stroke", "#2D2926")
-                .style("stroke-width", cellMargin)
+                .style("stroke-width", cellMargin);
             })
             .on("mouseout", d => {
               d3.select(this.event.target.parentNode)
                 .select("rect.day-fill")
-                .style("stroke", "transparent")
+                .style("stroke", "transparent");
               tooltip
                 .style("visibility", "hidden")
-                .text("") // Erase the text on mouse out
+                .text(""); // Erase the text on mouse out
             });
 
           // Fill colors
@@ -273,34 +275,34 @@ HTMLWidgets.widget({
             .duration(500)
             .attr("fill", (d, i) => {
               let col = data.data.filter(h => {
-                return h.date == d3.timeFormat("%Y-%m-%d")(d)
+                return h.date == d3.timeFormat("%Y-%m-%d")(d);
               })[0];
               if (typeof col !== 'undefined') {
-                return col.color
+                return col.color;
               } else {
-                return "#F4F4F4"
+                return "#F4F4F4";
               }
             });
-        };
+        }
 
         function init(data) {
-          drawMonths(data)
-          drawDateColor(data)
-        };
+          drawMonths(data);
+          drawDateColor(data);
+        }
 
         init(dayta[0]);
 
         // Allow shiny updating
-        if (x.inputId != null) {
+        if (x.inputId !== null) {
           let selectedLabel;
           $("#" + x.inputId).on("change", function () {
             label = this.value;
             data = dayta.filter(d => {
-              return d.label == label
-            })[0]
+              return d.label == label;
+            })[0];
             drawDateColor(data);
           });
-        };
+        }
 
       },
 

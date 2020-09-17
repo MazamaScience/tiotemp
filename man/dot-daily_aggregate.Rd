@@ -2,25 +2,29 @@
 % Please edit documentation in R/helpers.R
 \name{.daily_aggregate}
 \alias{.daily_aggregate}
-\title{Aggregate data.frame Object}
+\title{Create daily values}
 \usage{
-.daily_aggregate(df, FUN = function(x) {
-    mean(x, na.rm = TRUE)
-})
+.daily_aggregate(
+  data = NULL,
+  FUN = function(x) {     mean(x, na.rm = TRUE) },
+  timezone = NULL
+)
 }
 \arguments{
-\item{df}{\emph{data.frame} object.}
+\item{data}{\emph{data.frame} object containing a \emph{POSIXct}
+\code{datetime} column.}
 
 \item{FUN}{The function to be applied to each vector of numeric data.}
+
+\item{timezone}{Olson timezone used to align days.}
 }
 \value{
-Returns an aggregated \emph{data.frame} object.
+Returns a daily-aggregated \emph{data.frame} object.
 }
 \description{
-Aggregate (\emph{data.frame}) object along its
-datetime axis. Temporal aggregation involves splitting a \emph{data.frame} object into
-separate bins along its datetime axis. \code{FUN} is mapped to the \emph{data.frame}
-numeric variables in each bin.
+Aggregate a (\emph{data.frame}) object along its \code{datetime}
+axis. Records are separated into local-time daily bins and \code{FUN} is
+used to aggregate values for each day into a single daily value.
 }
 \details{
 \code{FUN} must operate on univariate numeric vectors and return a
@@ -28,5 +32,18 @@ scalar value. Besides the data variable, no additional arguments will be
 provided to this function. This means that functions like \code{mean} and
 \code{max} will need to be wrapped in a function that specifies
 \code{na.rm = TRUE}. See the examples below.
+}
+\examples{
+columnIndex <- 2
+
+data <- example_pwfslsmoke_object$data[,c(1,columnIndex)]
+meta <- example_pwfslsmoke_object$meta[(columnIndex - 1),]
+timezone <- meta$timezone
+
+head(data)
+
+dailyData <- .daily_aggregate(data, timezone = timezone)
+
+head(dailyData)
 }
 \keyword{internal}

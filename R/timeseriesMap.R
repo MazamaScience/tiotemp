@@ -47,6 +47,8 @@
 #' @examples
 #' library(tiotemp)
 #'
+#' # Example using PWFSLSmoke 'ws_monitor' object
+#'
 #' sensor <- example_pwfslsmoke_object
 #'
 #' timeseriesMap(
@@ -56,6 +58,17 @@
 #'   label = "siteName",
 #'   colors = c("#00E400","#FFFF00","#FF7E00","#FF0000","#8F3F97","#7E0023"),
 #'   breaks = c(12.0, 35.5,  55.5, 150.5, 250.5)
+#' )
+#'
+#' # Example using AirSensor 'airsensor' object
+#'
+#' sensor <- example_airsensor_object
+#'
+#' timeseriesMap(
+#'   data = sensor$data,
+#'   meta = sensor$meta,
+#'   index = "deviceDeploymentID",
+#'   label = "label"
 #' )
 #'
 #' @import htmlwidgets

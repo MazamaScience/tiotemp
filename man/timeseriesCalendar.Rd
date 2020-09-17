@@ -5,8 +5,8 @@
 \title{Timeseries Calendar Heatmap}
 \usage{
 timeseriesCalendar(
-  data,
-  meta,
+  data = NULL,
+  meta = NULL,
   index = "monitorID",
   label = "label",
   full = TRUE,
@@ -30,11 +30,59 @@ timeseries data. See Details.}
 \description{
 
 }
+\details{
+Use of this function requires \code{data} and \code{meta} dataframes that
+are linked by location-specific unique identifiers. In \code{meta}, each row
+contains location metadata associated with a unique timeseries. The unique
+identifiers for are found in \code{meta[[index]]}. The \code{data} dataframe
+uses these identifiers as column names with a separate column of data for
+each timeseries.
+
+\code{data} must be a dataframe of regular time series data.
+The \code{data} dataframe \emph{must} contain one 'datetime' column. All other
+columns must have the names specified in \code{meta[[index]]}.
+
+\code{meta} must be a dataframe that contains location information associated
+with the timeseries found in \code{data}.
+
+The following \code{meta} columns \emph{must} be included:
+
+\itemize{
+\item{code{"timezone"} -- A column named \code{"timezone"} must contain the
+Olson timezone associated with each location.}
+\item{code{index} -- Name of the the column containing the unique
+identifier associated with each location. These map onto columns in the
+\code{data} dataframe.}
+\item{code{label} -- Name of the column containing the human readable label
+associated with each location.}
+}
+
+\code{...} Additional (optional) configuration arguments:
+
+\itemize{
+\item{\code{width} -- widget width}
+\item{\code{height} -- widget_height}
+\item{\code{colors} -- colors}
+\item{\code{breaks} -- color ramp breaks}
+\item{\code{elementId} -- HTML element ID}
+\item{\code{inputId} -- shiny input ID}
+\item{\code{unitString} -- units appended to hover text}
+}
+}
+\note{
+When specifying \code{colors} and \code{breaks}, you must use the
+\pkg{d3} idiom where the vector of colors is one longer than the vector of
+breaks. Everything below the lowest break gets the lowest color. Everything
+above the highest break gets the highest color.
+}
 \examples{
 library(tiotemp)
 
 sensor <- example_airsensor_object
 
-timeseriesCalendar(data = sensor$data[,c(1,2)], meta = sensor$meta[1,])
+timeseriesCalendar(
+  data = sensor$data[,c(1,2)],
+  meta = sensor$meta[1,],
+  unitString = "  (\u00B5g/m\u00B3)")
 
 }

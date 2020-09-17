@@ -1,3 +1,11 @@
+# tiotemp 0.2.4
+
+* Improvements to `timeseriesCalendar()`
+  - correct tooltip tracking
+  - various bug fixes
+  - days calculated based on LST (Local Standard Time all-year-round)
+* Added plotly barchart.
+* Updated example datasets to reflect use data from September, 2020.
 
 # tiotemp 0.2.3
 
