@@ -56,11 +56,11 @@ HTMLWidgets.widget({
 
         // Draw the points on the leaflet svg layer
         svg
-          .selectAll(".point")
+          .selectAll(".point-map")
           .data(data)
           .enter()
           .append("circle")
-          .attr("class", "point")
+          .attr("class", "point-map")
           .attr("id", d => {
             return d.label
           })
@@ -81,7 +81,7 @@ HTMLWidgets.widget({
 
         // Point mouseover/out/click handling
         // NOTE: ES6 arrow functions are inconsistent - use standard syntax
-        svg.selectAll(".point")
+        svg.selectAll(".point-map")
           .on("mouseover", function (d) {
 
             tooltip
@@ -113,7 +113,7 @@ HTMLWidgets.widget({
           })
           .on("click", function (d) {
 
-            svg.selectAll(".point")
+            svg.selectAll(".point-map")
               .style("stroke", "white")
               .attr("stroke-width", 2)
               .attr("fill-opacity", 0.75)
@@ -140,7 +140,7 @@ HTMLWidgets.widget({
         map
           .on("moveend", () => {
             d3.select(el)
-              .selectAll(".point")
+              .selectAll(".point-map")
               .attr("cx", d => {
                 return map.latLngToLayerPoint(d.LatLng).x
               })
@@ -479,7 +479,7 @@ HTMLWidgets.widget({
 
           let pos = dateScale(roundDate(date))
           d3.select(el)
-            .selectAll(".point")
+            .selectAll(".point-map")
             .transition()
             .duration(25)
             .style("fill", (d, i) => {
