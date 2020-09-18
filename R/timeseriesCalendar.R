@@ -81,9 +81,6 @@ timeseriesCalendar <- function(
   MazamaCoreUtils::stopIfNull(data)
   MazamaCoreUtils::stopIfNull(meta)
 
-  if ( ncol(data) > 2 )
-    stop("Parameter 'data' must contain only two columns.")
-
   if ( !"datetime" %in% names(data) )
     stop("Parameter 'data' must contain a column named 'datetime'")
 
@@ -138,7 +135,7 @@ timeseriesCalendar <- function(
   dailyData <- .daily_aggregate(
     data = data,
     FUN =  function(x) { mean(x, na.rm = TRUE) },
-    timezone = meta$timezone
+    timezone = 'UTC'#meta$timezone
   )
 
   if ( full ) {
@@ -148,7 +145,7 @@ timeseriesCalendar <- function(
       "datetime" = MazamaCoreUtils::dateSequence(
         strftime(dailyData$datetime[1], "%Y010101"),
         strftime(dailyData$datetime[nrow(dailyData)], "%Y123101"),
-        timezone = meta$timezone
+        timezone = 'UTC'#meta$timezone
       )
     )
 
