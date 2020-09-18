@@ -294,7 +294,6 @@ HTMLWidgets.widget({
 
         // Allow shiny updating
         if (x.inputId !== null) {
-          let selectedLabel;
           $("#" + x.inputId).on("change", function () {
             label = this.value;
             data = dayta.filter(d => {

@@ -20,6 +20,8 @@ HTMLWidgets.widget({
     return {
       renderValue: function (x) {
 
+        d3.select(el).selectAll("svg").remove();
+
         /* Create the map features */
 
         // Center the map to the point loc average
@@ -29,12 +31,12 @@ HTMLWidgets.widget({
         // Prepare the point data
         const data = prepData(x);
 
-        let tooltip = d3.select(".tooltip-calendar");
+        let tooltip = d3.select(".tooltip-map");
         if (tooltip.empty()) {
           tooltip = d3.select("body")
             .append("div")
             .style("visibility", "hidden")
-            .attr("class", "tooltip-calendar")
+            .attr("class", "tooltip-map")
             .style("background-color", "#282b30")
             .style("border", "solid")
             .style("border-color", "#282b30")
@@ -42,7 +44,8 @@ HTMLWidgets.widget({
             .style("border-radius", "5px")
             .style("width", width / 12)
             .style("color", "#F4F4F4")
-            .style("position", "absolute");
+            .style("position", "absolute")
+            .style("z-index", 666);
         }
 
         // Add an svg layer to the leaflet pane
@@ -58,7 +61,6 @@ HTMLWidgets.widget({
           .selectAll(".point")
           .data(data)
           .enter()
-          .append("g")
           .append("circle")
             .attr("class", "point")
             .attr("id", d => { return d.label })
@@ -73,13 +75,71 @@ HTMLWidgets.widget({
             .attr("stoke-opacity", 0.75)
             .attr("pointer-events", "visible");
 
-          // On map move/zoom, update the point location
-          map.on("moveend", () => {
-            d3.select(el)
-              .selectAll(".point")
-              .attr("cx", d => { return map.latLngToLayerPoint(d.LatLng).x })
-              .attr("cy", d => { return map.latLngToLayerPoint(d.LatLng).y })
+        // Point mouseover/out/click handling
+        // NOTE: ES6 arrow functions are inconsistent - use standard syntax
+        svg.selectAll(".point")
+          .on("mouseover", function(d) {
+            tooltip
+                .style("visibility", "visible")
+                .style('left', `${event.pageX + 10}px`)
+                .style('top', `${event.pageY + 10}px`)
+                .text(d.label)
+                .style("text-anchor", "middle")
+                .style("font-family", "sans-serif")
+                .style("font-size", "0.7em");
+
+            d3.select(this)
+              .transition()
+              .duration(50)
+              .attr("r", 10.5)
+              .style("cursor", "pointer");
           })
+          .on("mouseout", function(d) {
+
+            tooltip
+                .style("visibility", "hidden")
+                .text(""); // Erase the text on mouse out
+
+            d3.select(this)
+              .transition()
+              .duration(150)
+              .attr("r", 8.5);
+
+          })
+          .on("click", function(d) {
+
+            svg.selectAll(".point")
+              .style("stroke", "white")
+              .attr("stroke-width", 2)
+              .attr("fill-opacity", 0.75)
+              .style("stoke-opacity", 0.75);
+
+            d3.select(this)
+              .raise()
+              .transition()
+              .duration(50)
+              .attr("stroke-width", 3)
+              .attr("fill-opacity", 1)
+              .style("stroke-opacity", 0.75)
+              .style("stroke", "#282b30");
+
+
+            // If the shiny input id is provided, update the input
+            if(x.inputId != null) {
+              console.log("Trying to update shiny: ", x.inputId)
+              Shiny.setInputValue(x.inputId, d.label);
+            }
+
+          });
+
+          // On map move/zoom, update the point location
+          map
+            .on("moveend", () => {
+              d3.select(el)
+                .selectAll(".point")
+                .attr("cx", d => { return map.latLngToLayerPoint(d.LatLng).x })
+                .attr("cy", d => { return map.latLngToLayerPoint(d.LatLng).y })
+            })
 
           // Create two scales; the x scale of the canvas itself,
           // and the x date scale of the data for mapping datetimes to index
@@ -89,7 +149,7 @@ HTMLWidgets.widget({
             .clamp(true),
             dateScale = d3.scaleTime()
             .domain([data[0].domain.sd, data[0].domain.ed])
-            .rangeRound([0, data.length])
+            .rangeRound([0, data[0].data.length - 1])
             .clamp(true);
 
           // Draw the startdate fill
@@ -168,7 +228,7 @@ HTMLWidgets.widget({
                 .attr("x", xScale)
                 .attr("y", 10)
                 .attr("text-anchor", "middle")
-                .text(function(d) { return d });
+                .text(function(d) { return d3.timeFormat("%b %d")(d) });
 
           // Add the slider handle
           slider
@@ -203,26 +263,30 @@ HTMLWidgets.widget({
                 playing = false;
                 pause()
                 // Play button while paused
-                d3.select(".playback-button")
-                .html(`<svg width=${50}px height=${50}px viewBox="0 0 16 16" class="bi bi-play-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>`)
+                d3.select(el)
+                  .select(".playback-button")
+                  .html(`<svg width=${50}px height=${50}px viewBox="0 0 16 16" class="bi bi-play-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>`)
 
               } else {
                 playing = true;
                 play()
                 // Pause button while playing
-                d3.select(".playback-button")
+                d3.select(el)
+                  .select(".playback-button")
                   .html(`<svg width=${50}px height=${50}px viewBox="0 0 16 16" class="bi bi-pause-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/></svg>`)
               }
             })
             .on("mouseover", () => {
-              d3.select(".playback-button")
+              d3.select(el)
+                .select(".playback-button")
                 .transition()
                 .duration(250)
                 .style("opacity", 0.7)
                 .style("cursor", "pointer");
             })
             .on("mouseout", () => {
-              d3.select(".playback-button")
+              d3.select(el)
+                .select(".playback-button")
                 .transition()
               .duration(250)
               .style("opacity", 1)
@@ -321,10 +385,15 @@ HTMLWidgets.widget({
               function step() {
                 // Add an hour while playing
                 sliderDate.setHours(sliderDate.getHours() + 1)
+                // reset date if at end
+                if ( sliderDate > data[0].domain.ed ) {
+                  sliderDate = data[0].domain.sd
+                }
                 // Update the handle position
                 slider
                   .select(".slider-track-handle")
                   .style("cx", xScale(sliderDate));
+                // update slider handle label
                 slider
                   .select(".slider-track-label")
                   .attr("transform", `translate(${xScale(sliderDate)}, ${-25})`)
@@ -340,6 +409,7 @@ HTMLWidgets.widget({
           // Map date to fill color
           function fillPoints(date) {
 
+            // Round the date to nearest hour
             function roundDate(date) {
               date.setMinutes(date.getMinutes() + 30);
               date.setMinutes(0);
@@ -348,21 +418,34 @@ HTMLWidgets.widget({
             };
 
             let pos = dateScale(roundDate(date))
-            let dateIndex = (pos < 0 ? 0 : pos) | 0;
-            d3.selectAll(".point")
+            d3.select(el)
+              .selectAll(".point")
               .transition()
               .duration(25)
               .style("fill", (d, i) => {
-                if ( typeof d.data[dateIndex] != undefined ) {
-                  if ( d.data[dateIndex].value != undefined) {
-                    return d.data[dateIndex].color
+                if ( d.data[pos] !== undefined ) {
+                  if ( d.data[pos].value !== undefined) {
+                    return d.data[pos].color
                   } else {
-                    return "#9a9a9a" // grey if no value for time
+                    // move greys to back
+                    d3.select(el)
+                      .selectAll(`[id='${d.id}']`)
+                      .lower();
+                    return "#9a9a9a"; // grey if no value for time
                   }
-
                 }
             })
           };
+
+
+        // Allow shiny updating
+        if (x.inputId !== null) {
+          $("#" + x.inputId).on("change", function () {
+            d3.selectAll("circle#"+this.value)
+              .dispatch("click")
+          });
+        }
+
 
         },
 
