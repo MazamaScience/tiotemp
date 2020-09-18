@@ -167,7 +167,7 @@ HTMLWidgets.widget({
         // slider in order to avoid weird stuff from using leaflets built-in svg overlary
         let view = document.querySelector("div#" + el.id).getBoundingClientRect()
 
-        let canvasHeight = view.height * 0.10;
+        let canvasHeight = "100";//view.height * 0.10;
 
         let canvas = d3.select(el)
           .select(".leaflet-control-container")
@@ -224,16 +224,16 @@ HTMLWidgets.widget({
               // by inverting the x pos we get the current date bound to slider
               // xscale(x pos) yields the the x pos bound to the slider
               sliderDate = xScale.invert(d3.event.x);
-              slider
+              d3.select(el)
                 .select(".slider-track-handle")
-                .style("cx", xScale(sliderDate))
-              slider
+                .attr("cx", xScale(sliderDate));
+              d3.select(el)
                 .select(".slider-track-label")
                 .attr("transform", `translate(${xScale(sliderDate)}, ${-25})`)
-                .text(d3.timeFormat("%B %d %H:%M")(sliderDate))
+                .text(d3.timeFormat("%B %d %H:%M")(sliderDate));
 
               // Update the point fills
-              fillPoints(sliderDate)
+              fillPoints(sliderDate);
 
             })
           );
@@ -262,7 +262,7 @@ HTMLWidgets.widget({
           .attr("x", xScale)
           .attr("y", 10)
           .attr("text-anchor", "middle")
-          .text(function (d) {
+          .text(function(d) {
             return tickFormat(d)
           });
 
@@ -275,7 +275,7 @@ HTMLWidgets.widget({
           .style("stroke", "#000")
           .style("stroke-opacity", 0.5)
           .style("stroke-width", "1.25px")
-          .style("cx", width * 0.25);
+          .attr("cx", width * 0.25);
 
         slider
           .append("text")
@@ -376,7 +376,7 @@ HTMLWidgets.widget({
             return d.datetime
           });
           const sd = new Date(dateDomain.slice(1)[0]),
-            ed = new Date(dateDomain.slice(-1)[0]);
+                ed = new Date(dateDomain.slice(-1)[0]);
 
 
           // Index ID using passed in index string
@@ -450,7 +450,7 @@ HTMLWidgets.widget({
             // Update the handle position
             slider
               .select(".slider-track-handle")
-              .style("cx", xScale(sliderDate));
+              .attr("cx", xScale(sliderDate));
             // update slider handle label
             slider
               .select(".slider-track-label")
