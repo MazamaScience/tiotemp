@@ -79,6 +79,7 @@ HTMLWidgets.widget({
         // NOTE: ES6 arrow functions are inconsistent - use standard syntax
         svg.selectAll(".point")
           .on("mouseover", function(d) {
+
             tooltip
                 .style("visibility", "visible")
                 .style('left', `${event.pageX + 10}px`)
@@ -155,21 +156,29 @@ HTMLWidgets.widget({
           // Draw the startdate fill
           fillPoints(data[0].domain.sd);
 
+
+
           // Hack: create a leaflet control container class element to house the
           // slider in order to avoid weird stuff from using leaflets built-in svg overlary
+          let view = document.querySelector("div#" + el.id).getBoundingClientRect()
+
+          console.log(view)
+
+          let canvasHeight = view.height*0.10;
+
           let canvas = d3.select(el)
             .select(".leaflet-control-container")
             .select(".leaflet-bottom")
             .append("svg")
             .attr("class", "leaflet-control")
             .attr("width", width)
-            .attr("height", height*0.20);
+            .attr("height", canvasHeight);
 
           // Create the slider
           let slider = canvas
             .append("g")
               .attr("class", "slider")
-              .attr("transform", `translate(${0}, ${height*0.20/2})`)
+              .attr("transform", `translate(${0}, ${canvasHeight/2})`)
               .on('mouseover', function () { map.dragging.disable() })
               .on('mouseout', function () { map.dragging.enable() });
 
@@ -208,7 +217,7 @@ HTMLWidgets.widget({
                 slider
                   .select(".slider-track-label")
                   .attr("transform", `translate(${xScale(sliderDate)}, ${-25})`)
-                  .text(sliderDate)
+                  .text(d3.timeFormat("%B %d %H:%M")(sliderDate))
 
                 // Update the point fills
                 fillPoints(sliderDate)
@@ -216,19 +225,31 @@ HTMLWidgets.widget({
               })
             );
 
+
+          let ticks,
+              tickFormat;
+          let days = data[0].data.length/24;
+          if ( days > 1 ) {
+            ticks = xScale.ticks(days)
+            tickFormat = d3.timeFormat("%b %d")
+          } else if ( days < 1 ) {
+            ticks = xScale.ticks()
+            tickFormat = d3.timeFormat("%b %d %H:00")
+          }
+
           // Add the slider track text date overlay ticks
           slider
             .insert("g", ".slider-track-overlay")
             .attr("class", "ticks")
             .attr("transform", "translate(0," + 18 + ")")
             .selectAll("text")
-              .data(xScale.ticks())
+              .data(ticks)
               .enter()
                 .append("text")
                 .attr("x", xScale)
                 .attr("y", 10)
                 .attr("text-anchor", "middle")
-                .text(function(d) { return d3.timeFormat("%b %d")(d) });
+                .text(function(d) { return tickFormat(d) });
 
           // Add the slider handle
           slider
@@ -245,7 +266,7 @@ HTMLWidgets.widget({
             .append("text")
             .attr("class", "slider-track-label")
             .attr("text-anchor", "middle")
-            .text(data[0].domain.sd)
+            .text(d3.timeFormat("%B %d %H:%M")(data[0].domain.sd))
             .attr("transform", `translate(${width*0.25}, ${-25})`)
 
 
@@ -256,24 +277,15 @@ HTMLWidgets.widget({
             .attr("class", "playback-button")
             // bootstrap icons
             .html(`<svg width=${50}px height=${50}px viewBox="0 0 16 16" class="bi bi-play-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>`)
-            .attr("transform", `translate(${width*0.25 - 50 - 5}, ${height*0.20/2 - 25})`)
+            .attr("transform", `translate(${width*0.25 - 50 - 10}, ${canvasHeight/2 - 25})`)
             .style("color", "#282b3")
             .on("click", () => {
               if ( playing ) {
                 playing = false;
                 pause()
-                // Play button while paused
-                d3.select(el)
-                  .select(".playback-button")
-                  .html(`<svg width=${50}px height=${50}px viewBox="0 0 16 16" class="bi bi-play-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>`)
-
               } else {
                 playing = true;
                 play()
-                // Pause button while playing
-                d3.select(el)
-                  .select(".playback-button")
-                  .html(`<svg width=${50}px height=${50}px viewBox="0 0 16 16" class="bi bi-pause-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/></svg>`)
               }
             })
             .on("mouseover", () => {
@@ -377,17 +389,33 @@ HTMLWidgets.widget({
 
             // Pause
             function pause() {
+
+                // Play button while paused
+                d3.select(el)
+                  .select(".playback-button")
+                  .html(`<svg width=${50}px height=${50}px viewBox="0 0 16 16" class="bi bi-play-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>`)
+
               clearInterval(timer)
             };
 
             // Play
             function play() {
+
+                // Pause button while playing
+                d3.select(el)
+                  .select(".playback-button")
+                  .html(`<svg width=${50}px height=${50}px viewBox="0 0 16 16" class="bi bi-pause-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/></svg>`)
+
+              // Step function
               function step() {
+
                 // Add an hour while playing
                 sliderDate.setHours(sliderDate.getHours() + 1)
                 // reset date if at end
                 if ( sliderDate > data[0].domain.ed ) {
                   sliderDate = data[0].domain.sd
+                  pause()
+                  playing = false
                 }
                 // Update the handle position
                 slider
@@ -397,8 +425,10 @@ HTMLWidgets.widget({
                 slider
                   .select(".slider-track-label")
                   .attr("transform", `translate(${xScale(sliderDate)}, ${-25})`)
-                  .text(sliderDate)
+                  .text(d3.timeFormat("%B %d %H:%M")(sliderDate))
+
                 fillPoints(sliderDate);
+
               };
 
               // Set timer interval to step ^ every 250 ms
