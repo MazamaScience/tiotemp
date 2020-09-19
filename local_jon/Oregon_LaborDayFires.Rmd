@@ -1,0 +1,88 @@
+---
+title: "Oregon Labor Day Fires"
+author: "Mazama Science"
+date: "2020-09-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tiotemp)
+library(PWFSLSmoke)
+```
+
+```{r create_orwa}
+# Get 2020 data
+orwa_latest <-
+  monitor_loadLatest() %>%
+  monitor_subsetBy(timezone == "America/Los_Angeles") %>%
+  monitor_subsetBy(stateCode %in% c("OR","WA"))
+  
+orwa_2020 <- 
+  monitor_load(20200101, 20201001, monitorIDs = orwa_latest$meta$monitorID)
+
+# Get annual data but use the IDs to speed things up
+orwa_summer <-
+  orwa_2020 %>%
+  monitor_subset(tlim = c(20200701, 20201101))
+
+# Get the fire/smoke days
+orwa_smoke <-
+  orwa_summer %>%
+  monitor_subset(tlim = c(20200907, 20200914))
+```
+
+```{r orwa_summer_timeseriesPlot}
+# Create the basic plot
+monitor_timeseriesPlot(
+  orwa_summer,
+  style = 'gnats',
+  ylim = c(0,500),
+  xpd = NA
+)
+
+# Add annotations
+addAQILegend("top")
+addAQIStackedBar()
+addAQILines()
+title("Oregon/Washington Air Quality in 2020 -- the September of Smoke")
+```
+
+```{r orwa_timeseriesMap}
+timeseriesMap(
+  data = orwa_smoke$data,
+  meta = orwa_smoke$meta,
+  index = "monitorID",
+  label = "siteName",
+  colors = c("#00E400","#FFFF00","#FF7E00","#FF0000","#8F3F97","#7E0023"),
+  breaks = c(12.0, 35.5,  55.5, 150.5, 250.5)
+)
+```
+
+```{r orwa_timeseriesBarchart}
+seattle <- monitor_subset(orwa_summer, monitorIDs = "530330030_01")
+timeseriesBarChart(
+  seattle$data, 
+  seattle$meta,
+  index = "monitorID",
+  label = "siteName",
+  colors = c("#00E400","#FFFF00","#FF7E00","#FF0000","#8F3F97","#7E0023"),
+  breaks = c(12.0, 35.5,  55.5, 150.5, 250.5)
+)
+```
+
+```{r orwa_timeseriesBarchart}
+seattle <- monitor_subset(orwa_2020, monitorIDs = "530330030_01")
+timeseriesCalendar(
+  seattle$data, 
+  seattle$meta,
+  index = "monitorID",
+  label = "siteName",
+  full = FALSE,
+  colors = c("#00E400","#FFFF00","#FF7E00","#FF0000","#8F3F97","#7E0023"),
+  breaks = c(12.0, 35.5,  55.5, 150.5, 250.5)
+)
+```
