@@ -8,11 +8,6 @@ dependencies:
    version: 5.16.0
    src: htmlwidgets/lib/d3
    script: d3.js
- - name: fa
-   version: 5.14.0
-   src: htmlwidgets/lib/fontawesome
-   script: all.js
-   stylesheet: all.css
  - name: d3-collection
    version: 1.0.7
    src: htmlwidgets/lib/d3-collection

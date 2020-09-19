@@ -13,12 +13,13 @@ HTMLWidgets.widget({
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
       maxZoom: 18,
-    }).addTo(map)
+    }).addTo(map);
 
     return {
       renderValue: function (x) {
 
-        d3.select(el).selectAll("svg").remove();
+        d3.select(el).selectAll("#control-playback").remove();
+        d3.select(el).selectAll(".point-map").remove();
 
         /* Create the map features */
 
@@ -47,7 +48,7 @@ HTMLWidgets.widget({
         }
 
         // Add an svg layer to the leaflet pane
-        L.svg().addTo(map)
+        L.svg().addTo(map);
 
         let svg = d3.select(el)
           .select(".leaflet-pane")
@@ -62,13 +63,13 @@ HTMLWidgets.widget({
           .append("circle")
           .attr("class", "point-map")
           .attr("id", d => {
-            return d.label
+            return d.label;
           })
           .attr("cx", d => {
-            return map.latLngToLayerPoint(d.LatLng).x
+            return map.latLngToLayerPoint(d.LatLng).x;
           })
           .attr("cy", d => {
-            return map.latLngToLayerPoint(d.LatLng).y
+            return map.latLngToLayerPoint(d.LatLng).y;
           })
           .attr("r", 8.5)
           // init fill color as black
@@ -81,7 +82,9 @@ HTMLWidgets.widget({
 
         // Point mouseover/out/click handling
         // NOTE: ES6 arrow functions are inconsistent - use standard syntax
-        svg.selectAll(".point-map")
+        svg
+          .selectAll(".point-map")
+          // Point mouse over
           .on("mouseover", function (d) {
 
             tooltip
@@ -99,6 +102,7 @@ HTMLWidgets.widget({
               .attr("r", 10.5)
               .style("cursor", "pointer");
           })
+          // Point mouse out
           .on("mouseout", function (d) {
 
             tooltip
@@ -111,9 +115,13 @@ HTMLWidgets.widget({
               .attr("r", 8.5);
 
           })
+          // Point mouse click!
           .on("click", function (d) {
 
-            svg.selectAll(".point-map")
+            console.log("clicked");
+
+            svg
+              .selectAll(".point-map")
               .style("stroke", "white")
               .attr("stroke-width", 2)
               .attr("fill-opacity", 0.75)
@@ -130,8 +138,9 @@ HTMLWidgets.widget({
 
 
             // If the shiny input id is provided, update the input
-            if (x.inputId != null) {
+            if (x.inputId !== null) {
               Shiny.setInputValue(x.inputId, d.label);
+              $(`select#${x.inputId}`)[0].selectize.setValue(d.label, false)
             }
 
           });
@@ -142,12 +151,12 @@ HTMLWidgets.widget({
             d3.select(el)
               .selectAll(".point-map")
               .attr("cx", d => {
-                return map.latLngToLayerPoint(d.LatLng).x
+                return map.latLngToLayerPoint(d.LatLng).x;
               })
               .attr("cy", d => {
-                return map.latLngToLayerPoint(d.LatLng).y
-              })
-          })
+                return map.latLngToLayerPoint(d.LatLng).y;
+              });
+          });
 
         // Create two scales; the x scale of the canvas itself,
         // and the x date scale of the data for mapping datetimes to index
@@ -165,7 +174,7 @@ HTMLWidgets.widget({
 
         // Hack: create a leaflet control container class element to house the
         // slider in order to avoid weird stuff from using leaflets built-in svg overlary
-        let view = document.querySelector("div#" + el.id).getBoundingClientRect()
+        let view = document.querySelector("div#" + el.id).getBoundingClientRect();
 
         let canvasHeight = "100";//view.height * 0.10;
 
@@ -174,6 +183,7 @@ HTMLWidgets.widget({
           .select(".leaflet-bottom")
           .append("svg")
           .attr("class", "leaflet-control")
+          .attr("id", "control-playback")
           .attr("width", width)
           .attr("height", canvasHeight);
 
@@ -183,10 +193,10 @@ HTMLWidgets.widget({
           .attr("class", "slider")
           .attr("transform", `translate(${0}, ${canvasHeight/2})`)
           .on('mouseover', function () {
-            map.dragging.disable()
+            map.dragging.disable();
           })
           .on('mouseout', function () {
-            map.dragging.enable()
+            map.dragging.enable();
           });
 
         // Add the base slider track and lock the drag pos to it
@@ -201,14 +211,14 @@ HTMLWidgets.widget({
           .style("stroke-linecap", "round")
           .style("stroke-opacity", 0.3)
           .select(function () {
-            return this.parentNode.appendChild(this.cloneNode(true))
+            return this.parentNode.appendChild(this.cloneNode(true));
           })
           .attr("class", "slider-track-inset")
           .style("stroke", "#dcdcdc")
           .style("stroke-width", "8px")
           .style("stroke-linecap", "round")
           .select(function () {
-            return this.parentNode.appendChild(this.cloneNode(true))
+            return this.parentNode.appendChild(this.cloneNode(true));
           })
           .attr("class", "slider-track-overlay")
           .style("stroke-width", "50px")
@@ -243,12 +253,13 @@ HTMLWidgets.widget({
           tickFormat;
         let days = data[0].data.length / 24;
         if (days > 1) {
-          ticks = xScale.ticks(days)
-          tickFormat = d3.timeFormat("%b %d")
+          ticks = xScale.ticks(days);
+          tickFormat = d3.timeFormat("%b %d");
         } else if (days < 1) {
-          ticks = xScale.ticks()
-          tickFormat = d3.timeFormat("%b %d %H:00")
+          ticks = xScale.ticks();
+          tickFormat = d3.timeFormat("%b %d %H:00");
         }
+        console.log(ticks)
 
         // Add the slider track text date overlay ticks
         slider
@@ -263,7 +274,7 @@ HTMLWidgets.widget({
           .attr("y", 10)
           .attr("text-anchor", "middle")
           .text(function(d) {
-            return tickFormat(d)
+            return tickFormat(d);
           });
 
         // Add the slider handle
@@ -282,7 +293,7 @@ HTMLWidgets.widget({
           .attr("class", "slider-track-label")
           .attr("text-anchor", "middle")
           .text(d3.timeFormat("%B %d %H:%M")(data[0].domain.sd))
-          .attr("transform", `translate(${width*0.25}, ${-25})`)
+          .attr("transform", `translate(${width*0.25}, ${-25})`);
 
 
         // Create the play button
@@ -297,10 +308,10 @@ HTMLWidgets.widget({
           .on("click", () => {
             if (playing) {
               playing = false;
-              pause()
+              pause();
             } else {
               playing = true;
-              play()
+              play();
             }
           })
           .on("mouseover", () => {
@@ -316,7 +327,7 @@ HTMLWidgets.widget({
               .select(".playback-button")
               .transition()
               .duration(250)
-              .style("opacity", 1)
+              .style("opacity", 1);
           });
 
 
@@ -331,18 +342,18 @@ HTMLWidgets.widget({
 
           // Get center cords from meta and set the view to center
           centerLat = average(meta.map(d => {
-            return d.latitude
+            return d.latitude;
           }));
           centerLon = average(meta.map(d => {
-            return d.longitude
+            return d.longitude;
           }));
 
           return {
             Lat: centerLat,
             Lon: centerLon
-          }
+          };
 
-        };
+        }
 
         // Prep data function: creates point data for mapping, fill color, etc.
         function prepData(X) {
@@ -350,7 +361,7 @@ HTMLWidgets.widget({
           // Remap the colors
           const colorMap = function (value) {
             if (value === null) {
-              return "#F4F4F4"
+              return "#F4F4F4";
             } else {
               return d3.scaleThreshold()
                 .domain(X.breaks)
@@ -361,9 +372,9 @@ HTMLWidgets.widget({
           // Remap the values
           const valueMap = function (value) {
             if (value === 0) {
-              return undefined
+              return undefined;
             } else {
-              return value
+              return value;
             }
           };
 
@@ -373,20 +384,21 @@ HTMLWidgets.widget({
 
           // Useful date domain
           const dateDomain = data.map(d => {
-            return d.datetime
+            return d.datetime;
           });
-          const sd = new Date(dateDomain.slice(1)[0]),
+          console.log(dateDomain)
+          const sd = new Date(dateDomain[0]),
                 ed = new Date(dateDomain.slice(-1)[0]);
 
 
           // Index ID using passed in index string
           const indexIds = meta.map(d => {
-            return d[X.index]
+            return d[X.index];
           });
 
           // Add a LatLng object for leaflet to the metadata object
           meta.forEach(d => {
-            d.LatLng = new L.LatLng(d.latitude, d.longitude)
+            d.LatLng = new L.LatLng(d.latitude, d.longitude);
           });
 
           // Fancy data mapping
@@ -394,28 +406,30 @@ HTMLWidgets.widget({
             return {
               id: id,
               label: meta.filter(d => {
-                return d[X.index] == id
+                return d[X.index] == id;
               })[0][X.label],
               LatLng: meta.filter(d => {
-                return d[X.index] == id
+                return d[X.index] == id;
               })[0].LatLng,
               data: data.map(d => {
                 return {
                   date: new Date(d.datetime),
                   value: valueMap(+d[id]),
                   color: colorMap(+d[id])
-                }
+                };
               }),
               domain: {
                 sd,
                 ed
               }
-            }
+            };
           });
+
+          console.log(pointData);
 
           return pointData;
 
-        };
+        }
 
         // Pause
         function pause() {
@@ -423,10 +437,10 @@ HTMLWidgets.widget({
           // Play button while paused
           d3.select(el)
             .select(".playback-button")
-            .html(`<svg width=${50}px height=${50}px viewBox="0 0 16 16" class="bi bi-play-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>`)
+            .html(`<svg width=${50}px height=${50}px viewBox="0 0 16 16" class="bi bi-play-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>`);
 
-          clearInterval(timer)
-        };
+          clearInterval(timer);
+        }
 
         // Play
         function play() {
@@ -434,7 +448,7 @@ HTMLWidgets.widget({
           // Pause button while playing
           d3.select(el)
             .select(".playback-button")
-            .html(`<svg width=${50}px height=${50}px viewBox="0 0 16 16" class="bi bi-pause-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/></svg>`)
+            .html(`<svg width=${50}px height=${50}px viewBox="0 0 16 16" class="bi bi-pause-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/></svg>`);
 
           // Step function
           function step() {
@@ -443,9 +457,9 @@ HTMLWidgets.widget({
             sliderDate.setHours(sliderDate.getHours() + 1)
             // reset date if at end
             if (sliderDate > data[0].domain.ed) {
-              sliderDate = data[0].domain.sd
-              pause()
-              playing = false
+              sliderDate = data[0].domain.sd;
+              pause();
+              playing = false;
             }
             // Update the handle position
             slider
@@ -455,7 +469,7 @@ HTMLWidgets.widget({
             slider
               .select(".slider-track-label")
               .attr("transform", `translate(${xScale(sliderDate)}, ${-25})`)
-              .text(d3.timeFormat("%B %d %H:%M")(sliderDate))
+              .text(d3.timeFormat("%B %d %H:%M")(sliderDate));
 
             fillPoints(sliderDate);
 
@@ -494,16 +508,33 @@ HTMLWidgets.widget({
                   return "#9a9a9a"; // grey if no value for time
                 }
               }
-            })
+            });
         };
 
 
         // Allow shiny updating
         if (x.inputId !== null) {
-          $("#" + x.inputId).on("change", function () {
-            d3.selectAll("circle#" + this.value)
-              .dispatch("click")
-          });
+          $("#" + x.inputId)
+            .on("change", function (d) {
+              /*console.log(d)
+              d3.selectAll("circle#" + this.value)
+                .dispatch("click");*/
+              svg
+                .selectAll(".point-map")
+                .style("stroke", "white")
+                .attr("stroke-width", 2)
+                .attr("fill-opacity", 0.75)
+                .style("stoke-opacity", 0.75);
+
+              d3.selectAll("circle#" + this.value)
+                .raise()
+                .transition()
+                .duration(50)
+                .attr("stroke-width", 3)
+                .attr("fill-opacity", 1)
+                .style("stroke-opacity", 0.75)
+                .style("stroke", "#282b30");
+              });
         }
 
 
