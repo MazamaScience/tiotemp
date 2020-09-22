@@ -1,9 +1,10 @@
 dependencies:
+ - name: plotly
+   version: 1.54.7
+   src: htmlwidgets/lib/plotly
+   script: plotly-latest.min.js
+   #stylesheet:
  - name: d3
    version: 5.16.0
    src: htmlwidgets/lib/d3
    script: d3.js
- - name: d3-collection
-   version: 1.0.7
-   src: htmlwidgets/lib/d3-collection
-   script: d3-collection.v1.min.js

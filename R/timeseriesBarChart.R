@@ -71,7 +71,7 @@ timeseriesBarChart <- function(
 
   # create widget
   htmlwidgets::createWidget(
-    name = 'barChart',
+    name = 'timeseriesBarChart',
     x,
     width = args$width,
     height = args$hieght,
