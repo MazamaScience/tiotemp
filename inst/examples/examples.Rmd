@@ -1,5 +1,5 @@
 ---
-title: "eamples"
+title: "examples"
 author: "Mazama Science"
 date: "7/29/2020"
 output: html_document
@@ -16,27 +16,19 @@ library(AirSensor)
 
 ```{r}
 setArchiveBaseUrl("http://data.mazamascience.com/PurpleAir/v1") # SCAQMD sensors
-sensors <- sensor_load(startdate = 20200801, enddate = 20200910)
-labels <- sensors$meta$label
-```
-
-
-```{r}
-timeseriesMap(meta = sensors$meta, data = sensors$data)
+sensor <- sensor_load(startdate = 20200801, enddate = 20200910)
+labels <- sensor$meta$label
 ```
 
 ```{r}
-timeseriesBarChart(sensors$meta, sensors$data)
+timeseriesMap(meta = sensor$meta, data = sensor$data)
 ```
 
-
 ```{r}
-timeseriesCalendar(sensors$data, sensors$meta)
+timeseriesBarChart(meta = sensor$meta, data = sensor$data)
 ```
 
-
 ```{r}
-
-
+timeseriesCalendar(meta = sensor$meta, data= sensor$data)
 ```
 

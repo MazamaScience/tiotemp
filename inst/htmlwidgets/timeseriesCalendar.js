@@ -9,7 +9,7 @@ HTMLWidgets.widget({
 
 
     let cellMargin = 2,
-      cellSize = width / (29 + 2 * cellMargin); // 29 days per row and padding
+        cellSize = width / (29 + 2 * cellMargin); // 29 days per row and padding
 
     function prepData(X) {
 
