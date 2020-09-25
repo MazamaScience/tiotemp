@@ -248,14 +248,19 @@ HTMLWidgets.widget({
 
 
         let ticks,
-          tickFormat;
+          tickFormat,
+          rotate;
         let days = data[0].data.length / 24;
-        if (days > 1) {
-          ticks = xScale.ticks(days);
+        if (days > 2) {
+          if (days >= 14) {
+            ticks = xScale.ticks(7);
+          } else {
+            ticks = xScale.ticks(days);
+          }
           tickFormat = d3.timeFormat("%b %d");
-        } else if (days < 1) {
+        } else {
           ticks = xScale.ticks();
-          tickFormat = d3.timeFormat("%b %d %H:00");
+          tickFormat = d3.timeFormat("%H:00");
         }
 
         // Add the slider track text date overlay ticks
