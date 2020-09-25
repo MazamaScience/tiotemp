@@ -1,3 +1,10 @@
+# tiotemp 0.2.5
+
+ * Removed unused `barChart()` function.
+ * Removed unused dependencies and libraries.
+ * Added a placeholder "Introduction" vignette.
+ * Added "Oregon Labor Day Fires" article.
+
 # tiotemp 0.2.4
 
 * Improvements to `timeseriesCalendar()`

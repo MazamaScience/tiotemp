@@ -28,7 +28,7 @@ timeseries data. See Details.}
 \item{...}{Additional arguments. See details.}
 }
 \description{
-
+Creates a calendar that displays daily averages.
 }
 \details{
 Use of this function requires \code{data} and \code{meta} dataframes that

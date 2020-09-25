@@ -5,14 +5,23 @@ date: "2020-09-18"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 9)
 ```
 
-```{r}
+## Interactive visualizations of PM2.5 monitoring data
+
+This web page demonstrates a new **tiotemp** package being developed by 
+Mazama Science to provide interactive versions of common data visualizations
+for air quality monitoring data.
+
+```{r echo = FALSE, warning = FALSE, message = FALSE}
 library(tiotemp)
 library(PWFSLSmoke)
 ```
+
+We will use data obtained with the **PWFSLSmoke** monitoring package for Oregon
+and Washginton covering the Oregon fires which began on Labor Day weekend, 2020.
 
 ```{r create_orwa}
 # Get 2020 data
@@ -35,6 +44,15 @@ orwa_smoke <-
   monitor_subset(tlim = c(20200907, 20200914))
 ```
 
+For a little context for how terrible the smoke event was, the following graphic
+plots the values for 132 air quality monitors in Washington and Oregon. The date
+typically associated with the worst air quality of the year -- early July 5 --
+pales in comparisin to the smoke monster of mid September.
+
+```{r set_par, echo = FALSE}
+par(mar = c(5,4,6,2) + 0.1)
+```
+
 ```{r orwa_summer_timeseriesPlot}
 # Create the basic plot
 monitor_timeseriesPlot(
@@ -51,6 +69,16 @@ addAQILines()
 title("Oregon/Washington Air Quality in 2020 -- the September of Smoke")
 ```
 
+```{r restore_par, echo = FALSE}
+par(mar = c(5,4,4,2) + 0.1)
+```
+
+### TimeseriesMap
+
+The first interactive visualization is a timeseries map of hourly data during the first
+week of the smoke. This is a leaflet map with a built in slider that allows you 
+to scroll through time or just watch things evolve by hitting the play button. 
+
 ```{r orwa_timeseriesMap}
 timeseriesMap(
   data = orwa_smoke$data,
@@ -61,6 +89,13 @@ timeseriesMap(
   breaks = c(12.0, 35.5,  55.5, 150.5, 250.5)
 )
 ```
+
+### TimeseriesBarchart
+
+The seond interactive visualization is a timeseries barchart that allows you to "brush"
+over the bar chart to zoom in or double click to zoom out.
+
+For this chart, the data is from a monitor is in downtown Seattle.
 
 ```{r orwa_timeseriesBarchart}
 seattle <- monitor_subset(orwa_summer, monitorIDs = "530330030_01")
@@ -74,7 +109,16 @@ timeseriesBarChart(
 )
 ```
 
-```{r orwa_timeseriesBarchart}
+### TimeseriesCalendar
+
+The third visualizaiton is a calendar plot which displays daily averages for 
+a subset of months or for an entire year.
+
+Data from the same downtown Seattle monitor is used in this chart. July 5'th 
+barely shows up while June 25'th was the date of a large building fire near the
+monitor. The September smoke stands out.
+
+```{r orwa_timeseriesCalendar}
 seattle <- monitor_subset(orwa_2020, monitorIDs = "530330030_01")
 timeseriesCalendar(
   seattle$data, 

@@ -1,0 +1,7 @@
+pandoc: 2.3.1
+pkgdown: 1.4.1
+pkgdown_sha: ~
+articles:
+  Oregon_LaborDayFires: articles/Oregon_LaborDayFires.html
+  tiotemp: tiotemp.html
+

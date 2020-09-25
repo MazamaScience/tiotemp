@@ -1,6 +1,6 @@
 #' @title Timeseries Calendar Heatmap
 #'
-#' @description
+#' @description Creates a calendar that displays daily averages.
 #'
 #' @param data A data.frame that contains the hourly-resolution point location
 #' timeseries data. See Details.

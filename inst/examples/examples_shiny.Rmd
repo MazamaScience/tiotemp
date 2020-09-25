@@ -73,10 +73,4 @@ output$calendar1 <- renderTimeseriesCalendar({
 })
 ```
 
-```{r plotlybarchart, include=FALSE}
-output$bars <- renderBarChart(
-  barChart(sensors$data, sensors$meta, inputId = 'sensor', colors = colors, breaks = breaks)
-)
-
-```
 

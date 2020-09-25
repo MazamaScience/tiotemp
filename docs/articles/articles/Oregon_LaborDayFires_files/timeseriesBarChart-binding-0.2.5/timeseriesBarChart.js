@@ -1,10 +1,10 @@
 HTMLWidgets.widget({
 
-  name: 'barChart',
+  name: 'timeseriesBarChart',
 
   type: 'output',
 
-  factory: function(el, width, height) {
+    factory: function(el, width, height) {
 
     // TODO: define shared variables for this instance
 
@@ -105,3 +105,4 @@ HTMLWidgets.widget({
     };
   }
 });
+
