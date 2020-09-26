@@ -17,7 +17,7 @@
 #'
 #' sensor <- example_airsensor_object
 #'
-#' timeseriesBarChart(data = sensor$data[,c(1,2)], meta = sensor$meta[1,])
+#' timeseriesBarChart(data = sensor$data[,c(1,2)], meta = sensor$meta[1,], ylab = "\u03bcg / m\u00b3")
 #'
 timeseriesBarChart <- function(
   data,
