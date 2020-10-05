@@ -68,17 +68,20 @@ HTMLWidgets.widget({
           ];
 
           let layout = {
-              title: selectedData.label,
+              title: {
+                text: selectedData.label,
+                x: 0.05
+              },
               yaxis: {
                  title: x.ylab,
                  fixedrange: true
               },
               margin: {
-                l: 35,
+                l: 45,
                 r: 25,
                 b: 50,
                 t: 50,
-                pad: 4
+                pad: 0
               },
           };
 

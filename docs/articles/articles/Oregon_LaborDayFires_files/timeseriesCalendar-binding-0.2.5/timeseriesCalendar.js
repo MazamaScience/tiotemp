@@ -285,22 +285,30 @@ HTMLWidgets.widget({
             });
         }
 
-        function init(data) {
-          drawMonths(data);
-          drawDateColor(data);
-        }
+        // initialize using datetime axis of first (if only) data
+        drawMonths(dayta[0]);
 
-        init(dayta[0]);
+        // update teh colors
+        function update(data) {
+          drawDateColor(data);
+        };
 
         // Allow shiny updating
         if (x.inputId !== null) {
+
+          // Init
+          let label = $("#" + x.inputId)[0].selectize.getValue();
+          let data = dayta.filter(d => { return d.label == label; })[0];
+          update(data);
+
           $("#" + x.inputId).on("change", function () {
             label = this.value;
-            data = dayta.filter(d => {
-              return d.label == label;
-            })[0];
-            drawDateColor(data);
+            data = dayta.filter(d => { return d.label == label; })[0];
+            update(data);
           });
+
+        } else {
+          update(dayta[0]);
         }
 
       },

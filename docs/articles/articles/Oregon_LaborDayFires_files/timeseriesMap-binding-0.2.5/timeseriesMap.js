@@ -118,8 +118,6 @@ HTMLWidgets.widget({
           // Point mouse click!
           .on("click", function (d) {
 
-            console.log("clicked");
-
             svg
               .selectAll(".point-map")
               .style("stroke", "white")
@@ -250,16 +248,20 @@ HTMLWidgets.widget({
 
 
         let ticks,
-          tickFormat;
+          tickFormat,
+          rotate;
         let days = data[0].data.length / 24;
-        if (days > 1) {
-          ticks = xScale.ticks(days);
+        if (days > 2) {
+          if (days >= 14) {
+            ticks = xScale.ticks(7);
+          } else {
+            ticks = xScale.ticks(days);
+          }
           tickFormat = d3.timeFormat("%b %d");
-        } else if (days < 1) {
+        } else {
           ticks = xScale.ticks();
-          tickFormat = d3.timeFormat("%b %d %H:00");
+          tickFormat = d3.timeFormat("%H:00");
         }
-        console.log(ticks)
 
         // Add the slider track text date overlay ticks
         slider
@@ -386,7 +388,6 @@ HTMLWidgets.widget({
           const dateDomain = data.map(d => {
             return d.datetime;
           });
-          console.log(dateDomain)
           const sd = new Date(dateDomain[0]),
                 ed = new Date(dateDomain.slice(-1)[0]);
 
@@ -424,8 +425,6 @@ HTMLWidgets.widget({
               }
             };
           });
-
-          console.log(pointData);
 
           return pointData;
 
@@ -534,7 +533,14 @@ HTMLWidgets.widget({
                 .attr("fill-opacity", 1)
                 .style("stroke-opacity", 0.75)
                 .style("stroke", "#282b30");
+
+                let pointLatLng =  d3.selectAll("circle#" + this.value).data()[0].LatLng;
+
+                map.panTo(pointLatLng)
+
               });
+
+
         }
 
 
@@ -548,3 +554,4 @@ HTMLWidgets.widget({
     };
   }
 });
+.5
