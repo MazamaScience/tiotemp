@@ -1,3 +1,9 @@
+# tiotemp 0.2.6
+
+ * Updated `timeseriesMap()` tick labels.
+ * Improved titles and labels.
+ * Improved javascript rendering in `inst/timeseriesCalendar.js`.
+
 # tiotemp 0.2.5
 
  * Removed unused `barChart()` function.
