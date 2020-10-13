@@ -112,7 +112,7 @@ timeseriesCalendar <- function(
     args$colors <- c("#ededed", "#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a")
   }
   if ( !"breaks" %in% names(args) ) {
-    args$breaks <- c(0.1, 12, 35, 55, 75, 100)
+    args$breaks <- c(0.01, 8, 20, 35, 55, 100)
   }
   if ( !"unitString" %in% names(args) ) {
     args$unitString <- ""
