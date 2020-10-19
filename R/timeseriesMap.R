@@ -97,18 +97,22 @@ timeseriesMap <- function(
   # TODO:  .domain(x.breaks)
   # TODO:  .range(x.colors);
 
-  colors_scaqmd <- c("#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a")
-  breaks_scaqmd <- c(12, 35, 55, 75, 100)
+  default_colors <- c("#abe3f4", "#118cba", "#286096", "#8659a5", "#6a367a")
+  default_breaks <- c(12, 35, 55, 75, 100)
+  default_step <- 200 #ms
 
   # Store extra args
   args <- list( ... )
 
   # Set default colors
   if ( !"colors" %in% names(args) ) {
-    args$colors <- colors_scaqmd
+    args$colors <- default_colors
   }
   if ( !"breaks" %in% names(args) ) {
-    args$breaks <- breaks_scaqmd
+    args$breaks <- default_breaks
+  }
+  if ( !"step" %in% names(args) ) {
+    args$step <- default_step
   }
 
   # Available config arguments
@@ -118,7 +122,8 @@ timeseriesMap <- function(
     breaks = args$breaks, # color ramp breaks
     colors = args$colors, # colors
     elementId = args$elementId, # html element ID
-    inputId = args$inputId # Shiny input id
+    inputId = args$inputId, # Shiny input id
+    step = args$step # Step interval
   )
 
   # Create data list

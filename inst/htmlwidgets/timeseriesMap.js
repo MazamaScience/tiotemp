@@ -475,7 +475,7 @@ HTMLWidgets.widget({
           };
 
           // Set timer interval to step ^ every 250 ms
-          timer = setInterval(step, 250);
+          timer = setInterval(step, x.step);
 
         };
 
