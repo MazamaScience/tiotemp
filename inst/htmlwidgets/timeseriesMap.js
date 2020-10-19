@@ -502,7 +502,7 @@ HTMLWidgets.widget({
                 } else {
                   // move greys to back
                   d3.select(el)
-                    .selectAll(`[id='${d.id}']`)
+                    .selectAll(`[id='${d.label}']`)
                     .lower();
                   return "#9a9a9a"; // grey if no value for time
                 }
