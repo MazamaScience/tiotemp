@@ -1,3 +1,8 @@
+# tiotemp 0.2.7
+
+* Fixed z-indexing of pooints in `timeseriesMap()`
+* Added animations to `timeseriesBarChart()`
+
 # tiotemp 0.2.6
 
  * Updated `timeseriesMap()` tick labels.

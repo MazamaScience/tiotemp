@@ -39,9 +39,6 @@ wellPanel(
 wellPanel(
   timeseriesMapOutput("map2")
 )
-wellPanel(
-  barChartOutput("bars")
-)
 ```
 
 ```{r map1, include=FALSE}
