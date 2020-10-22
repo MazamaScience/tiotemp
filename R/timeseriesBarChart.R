@@ -45,6 +45,10 @@ timeseriesBarChart <- function(
   if ( !"breaks" %in% names(args) ) {
     args$breaks <- c(12, 35, 55, 75, 100)
   }
+  if ( !"ymax" %in% names(args) ) {
+    args$ymax <- 100
+  }
+
 
   # Aval config arguments
   config = list(
@@ -54,8 +58,10 @@ timeseriesBarChart <- function(
     breaks = args$breaks, # color ramp breaks
     colors = args$colors, # colors
     inputId = args$inputId, # Shiny input id
+    ymax = args$ymax, # y axis maxium
     ylab = args$ylab, # y axis label
     xlab = args$xlab # x axis label
+
   )
 
   # Create data list
