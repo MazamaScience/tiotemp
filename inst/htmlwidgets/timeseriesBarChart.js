@@ -44,88 +44,36 @@ HTMLWidgets.widget({
         });
 
         round = function(x) {
-          return Math.ceil(x / 25) * 25;
+          return Math.ceil(x / 10) * 10;
         }
 
         let selectedData = barData[0];
 
-        function drawPlot(selectedData) {
+        function initPlot(domain, range) {
+
           canvas = document.getElementById(el.id);
-          let max = round(d3.max(selectedData.data.map(d => {
-            return d.value
-          })));
-          let plotData = [{
-            x: selectedData.data.map(d => {
-              return d.date
-            }),
-            y: selectedData.data.map(d => {
-              return d.value
-            }),
-            marker: {
-              color: selectedData.data.map(d => {
-                return d.color
-              }),
-            },
+
+          let initPlotData = [{
+            x: domain,
+            y: range,
+            marker: {},
             type: 'bar'
           }];
 
           let layout = {
             title: {
-              text: selectedData.label,
+              text: '',
               x: 0.05
             },
             yaxis: {
               title: x.ylab,
-              range: [0, max],
-              fixedrange: true,
-              tick0: ''
-            },
-            margin: {
-              l: 45,
-              r: 25,
-              b: 50,
-              t: 50,
-              pad: 0
-            },
-          };
-
-          let config = {
-            displayModeBar: false,
-            responsive: true
-          };
-
-          // Plotly.react has the same signature as Plotly.newPlot
-          Plotly.react(canvas, plotData, layout, config);
-        }
-
-        drawPlot(selectedData);
-
-        function updateBars(selectedData) {
-          canvas = document.getElementById(el.id);
-          let plotData = [{
-            x: selectedData.data.map(d => {
-              return d.date
-            }),
-            y: selectedData.data.map(d => {
-              return d.value
-            }),
-            marker: {
-              color: selectedData.data.map(d => {
-                return d.color
-              }),
-            },
-            type: 'bar'
-          }];
-
-          let layout = {
-            title: {
-              text: selectedData.label,
-              x: 0.05
-            },
-            yaxis: {
-              title: x.ylab,
+              range: [0, x.ymax],
               fixedrange: true
             },
+            xaxis: {
+              // :(
+              title:  x.xlab//"Date" //d3.timeFormat("%Y")(new Date()) + " (" + new window.Intl.DateTimeFormat().resolvedOptions().timeZone + ")"
+            },
             margin: {
               l: 45,
               r: 25,
@@ -141,6 +89,30 @@ HTMLWidgets.widget({
           };
 
           // Plotly.react has the same signature as Plotly.newPlot
+          Plotly.newPlot(canvas, initPlotData, layout, config);
+
+        }
+
+        // Update the plot
+        function update(selectedData) {
+
+          canvas = document.getElementById(el.id);
+
+          let plotData = [{
+            x: selectedData.data.map(d => {
+              return d.date
+            }),
+            y: selectedData.data.map(d => {
+              return d.value
+            }),
+            marker: {
+              color: selectedData.data.map(d => {
+                return d.color
+              }),
+            },
+            type: 'bar'
+          }];
+
           Plotly.animate(canvas, {
             data: [{
               x: selectedData.data.map(d => {
@@ -157,7 +129,23 @@ HTMLWidgets.widget({
               type: 'bar'
             }],
             traces: [0],
-            layout: {}
+            layout: {
+              title: {
+                text: selectedData.label,
+                x: 0.05
+              },
+              yaxis: {
+                title: x.ylab,
+                fixedrange: true
+              },
+              margin: {
+                l: 45,
+                r: 25,
+                b: 50,
+                t: 50,
+                pad: 0
+              },
+            }
           }, {
             transition: {
               duration: 250,
@@ -167,57 +155,41 @@ HTMLWidgets.widget({
               duration: 250
             }
           });
-        }
-
-        function updateLayout(selectedData) {
-          canvas = document.getElementById(el.id);
-          let max = round(d3.max(selectedData.data.map(d => {
-            return d.value
-          })));
-          Plotly.animate(
-            canvas, {
-              layout: {
-                title: {
-                  text: selectedData.label,
-                  x: 0.05
-                },
-                yaxis: {
-                  title: x.ylab,
-                  fixedrange: true,
-                  range: [0, max],
-                  tick0: ''
-                },
-                margin: {
-                  l: 45,
-                  r: 25,
-                  b: 50,
-                  t: 50,
-                  pad: 0
-                },
-              }
-            }, {
-              transition: {
-                duration: 500,
-                easing: 'cubic-in-out'
-              }
-            }
-          )
 
         }
 
         // Allow shiny updating
-        if (x.inputId != null) {
+        if (x.inputId !== null) {
+
           let selectedLabel;
+
           $("#" + x.inputId).on("change", function () {
             selectedLabel = this.value;
             selectedData = barData.filter(d => {
               return d.label == selectedLabel
             })[0]
-            //updateLayout(selectedData);
-            //updateBars(selectedData);
-            drawPlot(selectedData);
 
+            let domain = selectedData.data.map(d => { return d.date }),
+                initY = selectedData.data.map(d => { return 0});
+
+              /*
+              NOTE: redrawing the plot with newPlot is not the most efficent method,
+              but it does negate the need to address any layout issues that may arise
+              */
+              initPlot(domain, initY);
+
+              update(selectedData);
           });
+
+        } else {
+
+          // By default use first of data
+          let domain = barData[0].data.map(d => { return d.date }),
+              initY = barData[0].data.map(d => { return 0 });
+
+          initPlot(domain, initY);
+
+          update(barData[0]);
         };
 
       },
