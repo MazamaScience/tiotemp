@@ -60,9 +60,13 @@ timeseriesBarChart <- function(
     inputId = args$inputId, # Shiny input id
     ymax = args$ymax, # y axis maxium
     ylab = args$ylab, # y axis label
-    xlab = args$xlab # x axis label
-
+    xlab = args$xlab, # x axis label
+    tz = args$tz # Timezone!
   )
+
+  if( !is.null(config$tz) ) {
+    data <- lubridate::with_tz(data, tzone = config$tz)
+  }
 
   # Create data list
   dataList <- list(

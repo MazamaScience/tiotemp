@@ -123,8 +123,14 @@ timeseriesMap <- function(
     colors = args$colors, # colors
     elementId = args$elementId, # html element ID
     inputId = args$inputId, # Shiny input id
-    step = args$step # Step interval
+    step = args$step, # Step interval
+    tz = args$tz # timezone!
   )
+
+  if( !is.null(config$tz) ) {
+    data <- lubridate::with_tz(data, tzone = config$tz)
+  }
+
 
   # Create data list
   dataList <- list(

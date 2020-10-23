@@ -126,7 +126,8 @@ timeseriesCalendar <- function(
     breaks = args$breaks,         # color ramp breaks
     colors = args$colors,         # colors
     inputId = args$inputId,       # Shiny input id
-    unitString = args$unitString  # appended to value in hover text
+    unitString = args$unitString,  # appended to value in hover text
+    tz = args$tz # timezone!
   )
 
   # ----- Create daily average dataframe ---------------------------------------
@@ -152,6 +153,11 @@ timeseriesCalendar <- function(
     dailyData <- dplyr::left_join(emptyYear, dailyData, by = "datetime")
 
   }
+
+  if( !is.null(config$tz) ) {
+    dailyData <- lubridate::with_tz(dailyData, tzone = config$tz)
+  }
+
 
   # ----- Create widget --------------------------------------------------------
 
