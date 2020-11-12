@@ -1,5 +1,5 @@
 ---
-title: "Introduction to tiotemp"
+title: "Introduction to {tiotemp}"
 author: "Mazama Science"
 date: "September 25, 2020"
 output: rmarkdown::html_vignette
@@ -9,7 +9,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
   
-  ```{r setup, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -24,17 +24,41 @@ The **tiotemp** R package is being developed by Mazama Science  to support the
 presentation of environmental time series data with interactive visualization
 components.
 
+```{r}
+library(tiotemp)
+summary(example_airsensor_object)
+```
+
+
+```{r data}
+data <- example_airsensor_object$data
+meta <- example_airsensor_object$meta
+```
+
+
 Current components include:
-
-## timeseriesBarChart
-
-A plotly.js based bar chart.
-
-## timeseriesCalendar
-
-A d3 based calendar plot.
 
 ## timeseriesMap
 
-A leaflet based map.
+A Leaflet.js & D3.js based map.
 
+```{r map}
+timeseriesMap(data, meta)
+```
+
+
+## timeseriesBarChart
+
+A Plotly.js based bar chart.
+
+```{r barchart}
+timeseriesBarChart(data, meta)
+```
+
+## timeseriesCalendar
+
+A D3.js based calendar plot.
+
+```{r calendar}
+timeseriesCalendar(data, meta, full = FALSE)
+```
