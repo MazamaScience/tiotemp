@@ -6,7 +6,11 @@ HTMLWidgets.widget({
 
   factory: function (el, width, height) {
 
-    // Create map
+    /*
+    **************************************
+                Create Map
+    **************************************
+    */
     let map = L.map(el); // center position + zoom
 
     // Add a tile to the map = a background. Comes from OpenStreetmap
@@ -21,7 +25,11 @@ HTMLWidgets.widget({
         d3.select(el).selectAll("#control-playback").remove();
         d3.select(el).selectAll(".point-map").remove();
 
-        /* Create the map features */
+        /*
+        **************************************
+                  Points, tooltips
+        **************************************
+        */
 
         // Center the map to the point loc average
         const center = getCenter(x);
@@ -137,8 +145,12 @@ HTMLWidgets.widget({
 
             // If the shiny input id is provided, update the input
             if (x.inputId !== null) {
-              Shiny.setInputValue(x.inputId, d.label);
-              $(`select#${x.inputId}`)[0].selectize.setValue(d.label, false)
+              try {
+                Shiny.setInputValue(x.inputId, d.label);
+                $(`select#${x.inputId}`)[0].selectize.setValue(d.label, false)
+              } catch (e) {
+                null
+              }
             }
 
           });
@@ -156,6 +168,13 @@ HTMLWidgets.widget({
               });
           });
 
+
+        /*
+        **************************************
+          Init point color, Input selection
+        **************************************
+        */
+
         // Create two scales; the x scale of the canvas itself,
         // and the x date scale of the data for mapping datetimes to index
         const xScale = d3.scaleTime()
@@ -167,14 +186,34 @@ HTMLWidgets.widget({
           .rangeRound([0, data[0].data.length - 1])
           .clamp(true);
 
-        // Draw the startdate fill
-        fillPoints(data[0].domain.sd);
+        // Draw the default startdate fill
+        let defaultStartDate = data[0].domain.sd;
+        fillPoints(defaultStartDate);
+
+        // Draw the default (on load) selection
+        if (x.inputId !== null) {
+          // watch the input for changes
+          $("#" + x.inputId)
+            .on("change", function (d) {
+              selectPoint(d.currentTarget.selectize.getValue());
+            })
+          // use value of selection if any ON LOAD
+          if ($(`select#${x.inputId}`)[0].selectize.getValue() !== '') {
+            selectPoint($(`select#${x.inputId}`)[0].selectize.getValue());
+          }
+        }
+
+        /*
+        **************************************
+                      Slider
+        **************************************
+        */
 
         // Hack: create a leaflet control container class element to house the
         // slider in order to avoid weird stuff from using leaflets built-in svg overlary
         let view = document.querySelector("div#" + el.id).getBoundingClientRect();
 
-        let canvasHeight = "100";//view.height * 0.10;
+        let canvasHeight = "100"; //view.height * 0.10;
 
         let canvas = d3.select(el)
           .select(".leaflet-control-container")
@@ -246,7 +285,7 @@ HTMLWidgets.widget({
             })
           );
 
-
+        // Determine the number of slider date ticks
         let ticks,
           tickFormat,
           rotate;
@@ -275,7 +314,7 @@ HTMLWidgets.widget({
           .attr("x", xScale)
           .attr("y", 10)
           .attr("text-anchor", "middle")
-          .text(function(d) {
+          .text(function (d) {
             return tickFormat(d);
           });
 
@@ -333,7 +372,11 @@ HTMLWidgets.widget({
           });
 
 
-        /* Helper Functions */
+        /*
+        **************************************
+                      Functions
+        **************************************
+        */
 
         // Calc the center coords from meta
         function getCenter(X) {
@@ -389,7 +432,7 @@ HTMLWidgets.widget({
             return d.datetime;
           });
           const sd = new Date(dateDomain[0]),
-                ed = new Date(dateDomain.slice(-1)[0]);
+            ed = new Date(dateDomain.slice(-1)[0]);
 
 
           // Index ID using passed in index string
@@ -510,39 +553,28 @@ HTMLWidgets.widget({
             });
         };
 
+        // Point selection
+        function selectPoint(pt) {
+          svg
+            .selectAll(".point-map")
+            .style("stroke", "white")
+            .attr("stroke-width", 2)
+            .attr("fill-opacity", 0.75)
+            .style("stoke-opacity", 0.75);
 
-        // Allow shiny updating
-        if (x.inputId !== null) {
-          $("#" + x.inputId)
-            .on("change", function (d) {
-              /*console.log(d)
-              d3.selectAll("circle#" + this.value)
-                .dispatch("click");*/
-              svg
-                .selectAll(".point-map")
-                .style("stroke", "white")
-                .attr("stroke-width", 2)
-                .attr("fill-opacity", 0.75)
-                .style("stoke-opacity", 0.75);
+          d3.selectAll("circle#" + pt)
+            .raise()
+            .transition()
+            .duration(50)
+            .attr("stroke-width", 3)
+            .attr("fill-opacity", 1)
+            .style("stroke-opacity", 0.75)
+            .style("stroke", "#282b30");
 
-              d3.selectAll("circle#" + this.value)
-                .raise()
-                .transition()
-                .duration(50)
-                .attr("stroke-width", 3)
-                .attr("fill-opacity", 1)
-                .style("stroke-opacity", 0.75)
-                .style("stroke", "#282b30");
+          let pointLatLng = d3.selectAll("circle#" + pt).data()[0].LatLng;
+          map.panTo(pointLatLng)
 
-                let pointLatLng =  d3.selectAll("circle#" + this.value).data()[0].LatLng;
-
-                map.panTo(pointLatLng)
-
-              });
-
-
-        }
-
+        };
 
       },
 

@@ -1,3 +1,7 @@
+# tiotemp 0.2.8
+
+* Fixed selection bugs
+
 # tiotemp 0.2.7
 
 * Fixed z-indexing of points in `timeseriesMap()`
