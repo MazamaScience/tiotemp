@@ -4,13 +4,17 @@ HTMLWidgets.widget({
 
   type: 'output',
 
-  factory: function (el, width, height) {
-
-    // TODO: define shared variables for this instance
+  factory: function(el, width, height) {
 
     return {
 
-      renderValue: function (x) {
+      renderValue: function(x) {
+
+        /*
+        *************
+          Data Prep
+        *************
+        */
 
         // Create color ramp profile using options
         let colorMap = d3.scaleThreshold()
@@ -43,11 +47,67 @@ HTMLWidgets.widget({
           }
         });
 
-        round = function(x) {
+        /*
+        ***************
+          Init Layout
+        ***************
+        */
+
+        let domain = barData[0].data.map(d => { return d.date }),
+        initY = barData[0].data.map(d => { return 0});
+
+        /*
+        ***************
+          Plot Data
+        ***************
+        */
+
+        // If input ID provided
+        if (x.inputId !== null) {
+
+          let selectedLabel;
+
+          $("#" + x.inputId).on("change", function(d) {
+
+            selectedLabel = d.currentTarget.selectize.getValue();
+            /*
+            NOTE: redrawing the plot with newPlot is not the most efficent method,
+            but it does negate the need to address any layout issues that may arise
+            */
+            initPlot(domain, initY);
+            update(selectedLabel);
+
+          });
+
+          if ($(`select#${x.inputId}`)[0].selectize.getValue() !== '') {
+
+            initPlot(domain, initY);
+            update($(`select#${x.inputId}`)[0].selectize.getValue());
+
+          }
+
+        } else {
+
+          // By default use first of index data
+          let domain = barData[0].data.map(d => { return d.date }),
+              initY = barData[0].data.map(d => { return 0 });
+
+          initPlot(domain, initY);
+          update(barData[0]);
+
+        };
+
+        /*
+        ***************
+          Functions
+        ***************
+        */
+
+        function round(x) {
           return Math.ceil(x / 10) * 10;
         }
 
-        let selectedData = barData[0];
+        //let selectedData = barData[0];
 
         function initPlot(domain, range) {
 
@@ -71,8 +131,7 @@ HTMLWidgets.widget({
               fixedrange: true
             },
             xaxis: {
-              // :(
-              title:  x.xlab//"Date" //d3.timeFormat("%Y")(new Date()) + " (" + new window.Intl.DateTimeFormat().resolvedOptions().timeZone + ")"
+              title:  x.xlab
             },
             margin: {
               l: 45,
@@ -94,9 +153,13 @@ HTMLWidgets.widget({
         }
 
         // Update the plot
-        function update(selectedData) {
+        function update(label) {
 
           canvas = document.getElementById(el.id);
+
+          let selectedData = barData.filter(d => {
+              return d.label == label
+            })[0]
 
           let plotData = [{
             x: selectedData.data.map(d => {
@@ -157,40 +220,6 @@ HTMLWidgets.widget({
           });
 
         }
-
-        // Allow shiny updating
-        if (x.inputId !== null) {
-
-          let selectedLabel;
-
-          $("#" + x.inputId).on("change", function () {
-            selectedLabel = this.value;
-            selectedData = barData.filter(d => {
-              return d.label == selectedLabel
-            })[0]
-
-            let domain = selectedData.data.map(d => { return d.date }),
-                initY = selectedData.data.map(d => { return 0});
-
-              /*
-              NOTE: redrawing the plot with newPlot is not the most efficent method,
-              but it does negate the need to address any layout issues that may arise
-              */
-              initPlot(domain, initY);
-
-              update(selectedData);
-          });
-
-        } else {
-
-          // By default use first of data
-          let domain = barData[0].data.map(d => { return d.date }),
-              initY = barData[0].data.map(d => { return 0 });
-
-          initPlot(domain, initY);
-
-          update(barData[0]);
-        };
 
       },
 

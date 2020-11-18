@@ -1,6 +1,7 @@
 # tiotemp 0.2.8
 
-* Fixed selection bugs
+* Fixed map selection bugs
+* updated draw logic for bar chart, map
 
 # tiotemp 0.2.7
 
