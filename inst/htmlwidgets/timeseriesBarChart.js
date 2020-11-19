@@ -93,7 +93,7 @@ HTMLWidgets.widget({
               initY = barData[0].data.map(d => { return 0 });
 
           initPlot(domain, initY);
-          update(barData[0]);
+          update(barData[0].label);
 
         };
 
@@ -106,8 +106,6 @@ HTMLWidgets.widget({
         function round(x) {
           return Math.ceil(x / 10) * 10;
         }
-
-        //let selectedData = barData[0];
 
         function initPlot(domain, range) {
 
